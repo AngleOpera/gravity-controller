@@ -1,3 +1,5 @@
+name: Publish NPM package
+
 on:
   push:
     branches: main
@@ -7,13 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
         with:
-          always-auth: true
-          node-version: "18"
-          registry-url: "https://registry.npmjs.org/"
+          node-version: 14
+      - run: yarn
+      - run: yarn build
+      - uses: JS-DevTools/npm-publish@v1
+        with:
           token: ${{ secrets.NPM_TOKEN }}
-      - run: yarn && yarn build && npm publish --public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
