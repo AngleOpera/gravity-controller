@@ -1,0 +1,19 @@
+# Temporary Rojo project file
+default.project.json
+
+# Project place file
+/SurviveArcade.rbxl
+
+# Log files
+syncback.log
+
+# Roblox Studio lock files
+/*.rbxlx.lock
+/*.rbxl.lock
+
+# roblox-ts
+/out
+/node_modules
+/include
+*.tsbuildinfo
+flamework.build

@@ -1,0 +1,3208 @@
+<roblox version="4">
+  <Item class="Script" referent="0">
+    <Properties>
+      <string name="Name">GravityController</string>
+      <BinaryString name="AttributesSerialize"></BinaryString>
+      <bool name="DefinesCapabilities">false</bool>
+      <bool name="Disabled">false</bool>
+      <Content name="LinkedSource">
+        <null>
+        </null>
+      </Content>
+      <token name="RunContext">0</token>
+      <string name="Source">local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayerScripts = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
+local StarterCharacterScripts = game:GetService("StarterPlayer"):WaitForChild("StarterCharacterScripts")
+
+local Client = script:WaitForChild("Client")
+
+local function replace(child, parent)
+	local found = parent:FindFirstChild(child.Name)
+	if found then found:Destroy() end
+	child.Parent = parent
+end
+
+replace(Client:WaitForChild("PlayerScriptsLoader"), StarterPlayerScripts)
+replace(Client:WaitForChild("RbxCharacterSounds"), StarterPlayerScripts)
+replace(Client:WaitForChild("Animate"), StarterCharacterScripts)
+
+script:WaitForChild("GravityController").Parent = ReplicatedStorage</string>
+      <int64 name="SourceAssetId">-1</int64>
+      <BinaryString name="Tags"></BinaryString>
+    </Properties>
+    <Item class="Folder" referent="1">
+      <Properties>
+        <string name="Name">Client</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <bool name="DefinesCapabilities">false</bool>
+        <int64 name="SourceAssetId">-1</int64>
+        <BinaryString name="Tags"></BinaryString>
+      </Properties>
+      <Item class="LocalScript" referent="2">
+        <Properties>
+          <string name="Name">Animate</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="DefinesCapabilities">false</bool>
+          <bool name="Disabled">false</bool>
+          <Content name="LinkedSource">
+            <null>
+            </null>
+          </Content>
+          <token name="RunContext">0</token>
+          <string name="Source">require(script:WaitForChild("Controller"))</string>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+        <Item class="ModuleScript" referent="3">
+          <Properties>
+            <string name="Name">Controller</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source">local animate = script.Parent
+local humanoid = animate.Parent:WaitForChild("Humanoid")
+local loaded = animate:WaitForChild("Loaded")
+
+require(animate:WaitForChild("VerifyAnims"))(humanoid, animate)
+
+local output
+if humanoid.RigType == Enum.HumanoidRigType.R6 then
+	output = require(animate:WaitForChild("R6"))
+else
+	output = require(animate:WaitForChild("R15"))
+end
+
+loaded.Value = true
+
+return output</string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+        <Item class="BoolValue" referent="4">
+          <Properties>
+            <string name="Name">Loaded</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+            <bool name="Value">false</bool>
+          </Properties>
+        </Item>
+        <Item class="BindableFunction" referent="5">
+          <Properties>
+            <string name="Name">PlayEmote</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="6">
+          <Properties>
+            <string name="Name">R15</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source"><![CDATA[local script = script.Parent
+
+local Character = script.Parent
+local Humanoid = Character:WaitForChild("Humanoid")
+local pose = "Standing"
+
+local userNoUpdateOnLoopSuccess, userNoUpdateOnLoopValue = pcall(function() return UserSettings():IsUserFeatureEnabled("UserNoUpdateOnLoop") end)
+local userNoUpdateOnLoop = userNoUpdateOnLoopSuccess and userNoUpdateOnLoopValue
+local userAnimationSpeedDampeningSuccess, userAnimationSpeedDampeningValue = pcall(function() return UserSettings():IsUserFeatureEnabled("UserAnimationSpeedDampening") end)
+local userAnimationSpeedDampening = userAnimationSpeedDampeningSuccess and userAnimationSpeedDampeningValue
+
+local animateScriptEmoteHookFlagExists, animateScriptEmoteHookFlagEnabled = pcall(function()
+	return UserSettings():IsUserFeatureEnabled("UserAnimateScriptEmoteHook")
+end)
+local FFlagAnimateScriptEmoteHook = animateScriptEmoteHookFlagExists and animateScriptEmoteHookFlagEnabled
+
+local AnimationSpeedDampeningObject = script:FindFirstChild("ScaleDampeningPercent")
+local HumanoidHipHeight = 2
+
+local EMOTE_TRANSITION_TIME = 0.1
+
+local currentAnim = ""
+local currentAnimInstance = nil
+local currentAnimTrack = nil
+local currentAnimKeyframeHandler = nil
+local currentAnimSpeed = 1.0
+
+local runAnimTrack = nil
+local runAnimKeyframeHandler = nil
+
+local animTable = {}
+local animNames = { 
+	idle = 	{	
+				{ id = "http://www.roblox.com/asset/?id=507766666", weight = 1 },
+				{ id = "http://www.roblox.com/asset/?id=507766951", weight = 1 },
+				{ id = "http://www.roblox.com/asset/?id=507766388", weight = 9 }
+			},
+	walk = 	{ 	
+				{ id = "http://www.roblox.com/asset/?id=507777826", weight = 10 } 
+			}, 
+	run = 	{
+				{ id = "http://www.roblox.com/asset/?id=507767714", weight = 10 } 
+			}, 
+	swim = 	{
+				{ id = "http://www.roblox.com/asset/?id=507784897", weight = 10 } 
+			}, 
+	swimidle = 	{
+				{ id = "http://www.roblox.com/asset/?id=507785072", weight = 10 } 
+			}, 
+	jump = 	{
+				{ id = "http://www.roblox.com/asset/?id=507765000", weight = 10 } 
+			}, 
+	fall = 	{
+				{ id = "http://www.roblox.com/asset/?id=507767968", weight = 10 } 
+			}, 
+	climb = {
+				{ id = "http://www.roblox.com/asset/?id=507765644", weight = 10 } 
+			}, 
+	sit = 	{
+				{ id = "http://www.roblox.com/asset/?id=2506281703", weight = 10 } 
+			},	
+	toolnone = {
+				{ id = "http://www.roblox.com/asset/?id=507768375", weight = 10 } 
+			},
+	toolslash = {
+				{ id = "http://www.roblox.com/asset/?id=522635514", weight = 10 } 
+			},
+	toollunge = {
+				{ id = "http://www.roblox.com/asset/?id=522638767", weight = 10 } 
+			},
+	wave = {
+				{ id = "http://www.roblox.com/asset/?id=507770239", weight = 10 } 
+			},
+	point = {
+				{ id = "http://www.roblox.com/asset/?id=507770453", weight = 10 } 
+			},
+	dance = {
+				{ id = "http://www.roblox.com/asset/?id=507771019", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=507771955", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=507772104", weight = 10 } 
+			},
+	dance2 = {
+				{ id = "http://www.roblox.com/asset/?id=507776043", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=507776720", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=507776879", weight = 10 } 
+			},
+	dance3 = {
+				{ id = "http://www.roblox.com/asset/?id=507777268", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=507777451", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=507777623", weight = 10 } 
+			},
+	laugh = {
+				{ id = "http://www.roblox.com/asset/?id=507770818", weight = 10 } 
+			},
+	cheer = {
+				{ id = "http://www.roblox.com/asset/?id=507770677", weight = 10 } 
+			},
+}
+
+-- Existance in this list signifies that it is an emote, the value indicates if it is a looping emote
+local emoteNames = { wave = false, point = false, dance = true, dance2 = true, dance3 = true, laugh = false, cheer = false}
+
+local PreloadAnimsUserFlag = false
+local PreloadedAnims = {}
+local successPreloadAnim, msgPreloadAnim = pcall(function()
+	PreloadAnimsUserFlag = UserSettings():IsUserFeatureEnabled("UserPreloadAnimations")
+end)
+if not successPreloadAnim then
+	PreloadAnimsUserFlag = false
+end
+
+math.randomseed(tick())
+
+function findExistingAnimationInSet(set, anim)
+	if set == nil or anim == nil then
+		return 0
+	end
+	
+	for idx = 1, set.count, 1 do 
+		if set[idx].anim.AnimationId == anim.AnimationId then
+			return idx
+		end
+	end
+	
+	return 0
+end
+
+function configureAnimationSet(name, fileList)
+	if (animTable[name] ~= nil) then
+		for _, connection in pairs(animTable[name].connections) do
+			connection:disconnect()
+		end
+	end
+	animTable[name] = {}
+	animTable[name].count = 0
+	animTable[name].totalWeight = 0	
+	animTable[name].connections = {}
+
+	local allowCustomAnimations = true
+
+	local success, msg = pcall(function() allowCustomAnimations = game:GetService("StarterPlayer").AllowCustomAnimations end)
+	if not success then
+		allowCustomAnimations = true
+	end
+
+	-- check for config values
+	local config = script:FindFirstChild(name)
+	if (allowCustomAnimations and config ~= nil) then
+		table.insert(animTable[name].connections, config.ChildAdded:connect(function(child) configureAnimationSet(name, fileList) end))
+		table.insert(animTable[name].connections, config.ChildRemoved:connect(function(child) configureAnimationSet(name, fileList) end))
+		
+		local idx = 0
+		for _, childPart in pairs(config:GetChildren()) do
+			if (childPart:IsA("Animation")) then
+				local newWeight = 1
+				local weightObject = childPart:FindFirstChild("Weight")
+				if (weightObject ~= nil) then
+					newWeight = weightObject.Value
+				end
+				animTable[name].count = animTable[name].count + 1
+				idx = animTable[name].count
+				animTable[name][idx] = {}
+				animTable[name][idx].anim = childPart
+				animTable[name][idx].weight = newWeight
+				animTable[name].totalWeight = animTable[name].totalWeight + animTable[name][idx].weight
+				table.insert(animTable[name].connections, childPart.Changed:connect(function(property) configureAnimationSet(name, fileList) end))
+				table.insert(animTable[name].connections, childPart.ChildAdded:connect(function(property) configureAnimationSet(name, fileList) end))
+				table.insert(animTable[name].connections, childPart.ChildRemoved:connect(function(property) configureAnimationSet(name, fileList) end))
+			end
+		end
+	end
+	
+	-- fallback to defaults
+	if (animTable[name].count <= 0) then
+		for idx, anim in pairs(fileList) do
+			animTable[name][idx] = {}
+			animTable[name][idx].anim = Instance.new("Animation")
+			animTable[name][idx].anim.Name = name
+			animTable[name][idx].anim.AnimationId = anim.id
+			animTable[name][idx].weight = anim.weight
+			animTable[name].count = animTable[name].count + 1
+			animTable[name].totalWeight = animTable[name].totalWeight + anim.weight
+		end
+	end
+	
+	-- preload anims
+	if PreloadAnimsUserFlag then
+		for i, animType in pairs(animTable) do
+			for idx = 1, animType.count, 1 do
+				if PreloadedAnims[animType[idx].anim.AnimationId] == nil then
+					Humanoid:LoadAnimation(animType[idx].anim)
+					PreloadedAnims[animType[idx].anim.AnimationId] = true
+				end				
+			end
+		end
+	end
+end
+
+------------------------------------------------------------------------------------------------------------
+
+function configureAnimationSetOld(name, fileList)
+	if (animTable[name] ~= nil) then
+		for _, connection in pairs(animTable[name].connections) do
+			connection:disconnect()
+		end
+	end
+	animTable[name] = {}
+	animTable[name].count = 0
+	animTable[name].totalWeight = 0	
+	animTable[name].connections = {}
+
+	local allowCustomAnimations = true
+
+	local success, msg = pcall(function() allowCustomAnimations = game:GetService("StarterPlayer").AllowCustomAnimations end)
+	if not success then
+		allowCustomAnimations = true
+	end
+
+	-- check for config values
+	local config = script:FindFirstChild(name)
+	if (allowCustomAnimations and config ~= nil) then
+		table.insert(animTable[name].connections, config.ChildAdded:connect(function(child) configureAnimationSet(name, fileList) end))
+		table.insert(animTable[name].connections, config.ChildRemoved:connect(function(child) configureAnimationSet(name, fileList) end))
+		local idx = 1
+		for _, childPart in pairs(config:GetChildren()) do
+			if (childPart:IsA("Animation")) then
+				table.insert(animTable[name].connections, childPart.Changed:connect(function(property) configureAnimationSet(name, fileList) end))
+				animTable[name][idx] = {}
+				animTable[name][idx].anim = childPart
+				local weightObject = childPart:FindFirstChild("Weight")
+				if (weightObject == nil) then
+					animTable[name][idx].weight = 1
+				else
+					animTable[name][idx].weight = weightObject.Value
+				end
+				animTable[name].count = animTable[name].count + 1
+				animTable[name].totalWeight = animTable[name].totalWeight + animTable[name][idx].weight
+				idx = idx + 1
+			end
+		end
+	end
+
+	-- fallback to defaults
+	if (animTable[name].count <= 0) then
+		for idx, anim in pairs(fileList) do
+			animTable[name][idx] = {}
+			animTable[name][idx].anim = Instance.new("Animation")
+			animTable[name][idx].anim.Name = name
+			animTable[name][idx].anim.AnimationId = anim.id
+			animTable[name][idx].weight = anim.weight
+			animTable[name].count = animTable[name].count + 1
+			animTable[name].totalWeight = animTable[name].totalWeight + anim.weight
+			-- print(name .. " [" .. idx .. "] " .. anim.id .. " (" .. anim.weight .. ")")
+		end
+	end
+	
+	-- preload anims
+	if PreloadAnimsUserFlag then
+		for i, animType in pairs(animTable) do
+			for idx = 1, animType.count, 1 do 
+				Humanoid:LoadAnimation(animType[idx].anim)
+			end
+		end
+	end
+end
+
+-- Setup animation objects
+function scriptChildModified(child)
+	local fileList = animNames[child.Name]
+	if (fileList ~= nil) then
+		configureAnimationSet(child.Name, fileList)
+	end	
+end
+
+script.ChildAdded:connect(scriptChildModified)
+script.ChildRemoved:connect(scriptChildModified)
+
+
+for name, fileList in pairs(animNames) do 
+	configureAnimationSet(name, fileList)
+end
+
+-- ANIMATION
+
+-- declarations
+local toolAnim = "None"
+local toolAnimTime = 0
+
+local jumpAnimTime = 0
+local jumpAnimDuration = 0.31
+
+local toolTransitionTime = 0.1
+local fallTransitionTime = 0.2
+
+local currentlyPlayingEmote = false
+
+-- functions
+
+function stopAllAnimations()
+	local oldAnim = currentAnim
+
+	-- return to idle if finishing an emote
+	if (emoteNames[oldAnim] ~= nil and emoteNames[oldAnim] == false) then
+		oldAnim = "idle"
+	end
+	
+	if FFlagAnimateScriptEmoteHook and currentlyPlayingEmote then
+		oldAnim = "idle"
+		currentlyPlayingEmote = false
+	end
+
+	currentAnim = ""
+	currentAnimInstance = nil
+	if (currentAnimKeyframeHandler ~= nil) then
+		currentAnimKeyframeHandler:disconnect()
+	end
+
+	if (currentAnimTrack ~= nil) then
+		currentAnimTrack:Stop()
+		currentAnimTrack:Destroy()
+		currentAnimTrack = nil
+	end
+
+	-- clean up walk if there is one
+	if (runAnimKeyframeHandler ~= nil) then
+		runAnimKeyframeHandler:disconnect()
+	end
+	
+	if (runAnimTrack ~= nil) then
+		runAnimTrack:Stop()
+		runAnimTrack:Destroy()
+		runAnimTrack = nil
+	end
+	
+	return oldAnim
+end
+
+function getHeightScale()
+	if Humanoid then
+		if not Humanoid.AutomaticScalingEnabled then
+			return 1
+		end
+		
+		local scale = Humanoid.HipHeight / HumanoidHipHeight
+		if userAnimationSpeedDampening then
+			if AnimationSpeedDampeningObject == nil then
+				AnimationSpeedDampeningObject = script:FindFirstChild("ScaleDampeningPercent")
+			end
+			if AnimationSpeedDampeningObject ~= nil then
+				scale = 1 + (Humanoid.HipHeight - HumanoidHipHeight) * AnimationSpeedDampeningObject.Value / HumanoidHipHeight
+			end
+		end
+		return scale
+	end	
+	return 1
+end
+
+local smallButNotZero = 0.0001
+function setRunSpeed(speed)
+	local speedScaled = speed * 1.25
+	local heightScale = getHeightScale()
+	local runSpeed = speedScaled / heightScale
+
+	if runSpeed ~= currentAnimSpeed then
+		if runSpeed < 0.33 then
+			currentAnimTrack:AdjustWeight(1.0)		
+			runAnimTrack:AdjustWeight(smallButNotZero)
+		elseif runSpeed < 0.66 then
+			local weight = ((runSpeed - 0.33) / 0.33)
+			currentAnimTrack:AdjustWeight(1.0 - weight + smallButNotZero)
+			runAnimTrack:AdjustWeight(weight + smallButNotZero)
+		else
+			currentAnimTrack:AdjustWeight(smallButNotZero)
+			runAnimTrack:AdjustWeight(1.0)
+		end
+		currentAnimSpeed = runSpeed
+		runAnimTrack:AdjustSpeed(runSpeed)
+		currentAnimTrack:AdjustSpeed(runSpeed)
+	end	
+end
+
+function setAnimationSpeed(speed)
+	if currentAnim == "walk" then
+			setRunSpeed(speed)
+	else
+		if speed ~= currentAnimSpeed then
+			currentAnimSpeed = speed
+			currentAnimTrack:AdjustSpeed(currentAnimSpeed)
+		end
+	end
+end
+
+function keyFrameReachedFunc(frameName)
+	if (frameName == "End") then
+		if currentAnim == "walk" then
+			if userNoUpdateOnLoop == true then
+				if runAnimTrack.Looped ~= true then
+					runAnimTrack.TimePosition = 0.0
+				end
+				if currentAnimTrack.Looped ~= true then
+					currentAnimTrack.TimePosition = 0.0
+				end
+			else
+				runAnimTrack.TimePosition = 0.0
+				currentAnimTrack.TimePosition = 0.0
+			end
+		else
+			local repeatAnim = currentAnim
+			-- return to idle if finishing an emote
+			if (emoteNames[repeatAnim] ~= nil and emoteNames[repeatAnim] == false) then
+				repeatAnim = "idle"
+			end
+			
+			if FFlagAnimateScriptEmoteHook and currentlyPlayingEmote then
+				if currentAnimTrack.Looped then
+					-- Allow the emote to loop
+					return
+				end
+				
+				repeatAnim = "idle"
+				currentlyPlayingEmote = false
+			end
+			
+			local animSpeed = currentAnimSpeed
+			playAnimation(repeatAnim, 0.15, Humanoid)
+			setAnimationSpeed(animSpeed)
+		end
+	end
+end
+
+function rollAnimation(animName)
+	local roll = math.random(1, animTable[animName].totalWeight) 
+	local origRoll = roll
+	local idx = 1
+	while (roll > animTable[animName][idx].weight) do
+		roll = roll - animTable[animName][idx].weight
+		idx = idx + 1
+	end
+	return idx
+end
+
+local function switchToAnim(anim, animName, transitionTime, humanoid)
+	-- switch animation		
+	if (anim ~= currentAnimInstance) then
+		
+		if (currentAnimTrack ~= nil) then
+			currentAnimTrack:Stop(transitionTime)
+			currentAnimTrack:Destroy()
+		end
+
+		if (runAnimTrack ~= nil) then
+			runAnimTrack:Stop(transitionTime)
+			runAnimTrack:Destroy()
+			if userNoUpdateOnLoop == true then
+				runAnimTrack = nil
+			end
+		end
+
+		currentAnimSpeed = 1.0
+	
+		-- load it to the humanoid; get AnimationTrack
+		currentAnimTrack = humanoid:LoadAnimation(anim)
+		currentAnimTrack.Priority = Enum.AnimationPriority.Core
+			
+		-- play the animation
+		currentAnimTrack:Play(transitionTime)
+		currentAnim = animName
+		currentAnimInstance = anim
+
+		-- set up keyframe name triggers
+		if (currentAnimKeyframeHandler ~= nil) then
+			currentAnimKeyframeHandler:disconnect()
+		end
+		currentAnimKeyframeHandler = currentAnimTrack.KeyframeReached:connect(keyFrameReachedFunc)
+		
+		-- check to see if we need to blend a walk/run animation
+		if animName == "walk" then
+			local runAnimName = "run"
+			local runIdx = rollAnimation(runAnimName)
+
+			runAnimTrack = humanoid:LoadAnimation(animTable[runAnimName][runIdx].anim)
+			runAnimTrack.Priority = Enum.AnimationPriority.Core
+			runAnimTrack:Play(transitionTime)		
+			
+			if (runAnimKeyframeHandler ~= nil) then
+				runAnimKeyframeHandler:disconnect()
+			end
+			runAnimKeyframeHandler = runAnimTrack.KeyframeReached:connect(keyFrameReachedFunc)	
+		end
+	end
+end
+
+function playAnimation(animName, transitionTime, humanoid) 	
+	local idx = rollAnimation(animName)
+	local anim = animTable[animName][idx].anim
+
+	switchToAnim(anim, animName, transitionTime, humanoid)
+	currentlyPlayingEmote = false
+end
+
+function playEmote(emoteAnim, transitionTime, humanoid)
+	switchToAnim(emoteAnim, emoteAnim.Name, transitionTime, humanoid)
+	currentlyPlayingEmote = true
+end
+
+-------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+
+local toolAnimName = ""
+local toolAnimTrack = nil
+local toolAnimInstance = nil
+local currentToolAnimKeyframeHandler = nil
+
+function toolKeyFrameReachedFunc(frameName)
+	if (frameName == "End") then
+		playToolAnimation(toolAnimName, 0.0, Humanoid)
+	end
+end
+
+
+function playToolAnimation(animName, transitionTime, humanoid, priority)	 		
+		local idx = rollAnimation(animName)
+		local anim = animTable[animName][idx].anim
+
+		if (toolAnimInstance ~= anim) then
+			
+			if (toolAnimTrack ~= nil) then
+				toolAnimTrack:Stop()
+				toolAnimTrack:Destroy()
+				transitionTime = 0
+			end
+					
+			-- load it to the humanoid; get AnimationTrack
+			toolAnimTrack = humanoid:LoadAnimation(anim)
+			if priority then
+				toolAnimTrack.Priority = priority
+			end
+				
+			-- play the animation
+			toolAnimTrack:Play(transitionTime)
+			toolAnimName = animName
+			toolAnimInstance = anim
+
+			currentToolAnimKeyframeHandler = toolAnimTrack.KeyframeReached:connect(toolKeyFrameReachedFunc)
+		end
+end
+
+function stopToolAnimations()
+	local oldAnim = toolAnimName
+
+	if (currentToolAnimKeyframeHandler ~= nil) then
+		currentToolAnimKeyframeHandler:disconnect()
+	end
+
+	toolAnimName = ""
+	toolAnimInstance = nil
+	if (toolAnimTrack ~= nil) then
+		toolAnimTrack:Stop()
+		toolAnimTrack:Destroy()
+		toolAnimTrack = nil
+	end
+
+	return oldAnim
+end
+
+-------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+-- STATE CHANGE HANDLERS
+
+function onRunning(speed)	
+	if speed > 0.75 then
+		local scale = 16.0
+		playAnimation("walk", 0.2, Humanoid)
+		setAnimationSpeed(speed / scale)
+		pose = "Running"
+	else
+		if emoteNames[currentAnim] == nil and not currentlyPlayingEmote then
+			playAnimation("idle", 0.2, Humanoid)
+			pose = "Standing"
+		end
+	end
+end
+
+function onDied()
+	pose = "Dead"
+end
+
+function onJumping()
+	playAnimation("jump", 0.1, Humanoid)
+	jumpAnimTime = jumpAnimDuration
+	pose = "Jumping"
+end
+
+function onClimbing(speed)
+	local scale = 5.0
+	playAnimation("climb", 0.1, Humanoid)
+	setAnimationSpeed(speed / scale)
+	pose = "Climbing"
+end
+
+function onGettingUp()
+	pose = "GettingUp"
+end
+
+function onFreeFall()
+	if (jumpAnimTime <= 0) then
+		playAnimation("fall", fallTransitionTime, Humanoid)
+	end
+	pose = "FreeFall"
+end
+
+function onFallingDown()
+	pose = "FallingDown"
+end
+
+function onSeated()
+	pose = "Seated"
+end
+
+function onPlatformStanding()
+	pose = "PlatformStanding"
+end
+
+-------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+
+function onSwimming(speed)
+	if speed > 1.00 then
+		local scale = 10.0
+		playAnimation("swim", 0.4, Humanoid)
+		setAnimationSpeed(speed / scale)
+		pose = "Swimming"
+	else
+		playAnimation("swimidle", 0.4, Humanoid)
+		pose = "Standing"
+	end
+end
+
+function animateTool()
+	if (toolAnim == "None") then
+		playToolAnimation("toolnone", toolTransitionTime, Humanoid, Enum.AnimationPriority.Idle)
+		return
+	end
+
+	if (toolAnim == "Slash") then
+		playToolAnimation("toolslash", 0, Humanoid, Enum.AnimationPriority.Action)
+		return
+	end
+
+	if (toolAnim == "Lunge") then
+		playToolAnimation("toollunge", 0, Humanoid, Enum.AnimationPriority.Action)
+		return
+	end
+end
+
+function getToolAnim(tool)
+	for _, c in ipairs(tool:GetChildren()) do
+		if c.Name == "toolanim" and c.className == "StringValue" then
+			return c
+		end
+	end
+	return nil
+end
+
+local lastTick = 0
+
+function stepAnimate(currentTime)
+	local amplitude = 1
+	local frequency = 1
+	local deltaTime = currentTime - lastTick
+	lastTick = currentTime
+
+	local climbFudge = 0
+	local setAngles = false
+
+	if (jumpAnimTime > 0) then
+		jumpAnimTime = jumpAnimTime - deltaTime
+	end
+
+	if (pose == "FreeFall" and jumpAnimTime <= 0) then
+		playAnimation("fall", fallTransitionTime, Humanoid)
+	elseif (pose == "Seated") then
+		playAnimation("sit", 0.5, Humanoid)
+		return
+	elseif (pose == "Running") then
+		playAnimation("walk", 0.2, Humanoid)
+	elseif (pose == "Dead" or pose == "GettingUp" or pose == "FallingDown" or pose == "Seated" or pose == "PlatformStanding") then
+		stopAllAnimations()
+		amplitude = 0.1
+		frequency = 1
+		setAngles = true
+	end
+
+	-- Tool Animation handling
+	local tool = Character:FindFirstChildOfClass("Tool")
+	if tool and tool:FindFirstChild("Handle") then
+		local animStringValueObject = getToolAnim(tool)
+
+		if animStringValueObject then
+			toolAnim = animStringValueObject.Value
+			-- message recieved, delete StringValue
+			animStringValueObject.Parent = nil
+			toolAnimTime = currentTime + .3
+		end
+
+		if currentTime > toolAnimTime then
+			toolAnimTime = 0
+			toolAnim = "None"
+		end
+
+		animateTool()		
+	else
+		stopToolAnimations()
+		toolAnim = "None"
+		toolAnimInstance = nil
+		toolAnimTime = 0
+	end
+end
+
+-- connect events
+
+local events = {}
+local eventHum = Humanoid
+local RepHumanoid = script:WaitForChild("ReplicatedHumanoid")
+	
+local function onUnhook()
+	for i = 1, #events do
+		events[i]:Disconnect()
+	end
+	events = {}
+end
+	
+local function onHook()
+	onUnhook()
+	
+	pose = Humanoid.Sit and "Seated" or "Standing"
+	
+	events = {
+		eventHum.Died:connect(onDied),
+		eventHum.Running:connect(onRunning),
+		eventHum.Jumping:connect(onJumping),
+		eventHum.Climbing:connect(onClimbing),
+		eventHum.GettingUp:connect(onGettingUp),
+		eventHum.FreeFalling:connect(onFreeFall),
+		eventHum.FallingDown:connect(onFallingDown),
+		eventHum.Seated:connect(onSeated),
+		eventHum.PlatformStanding:connect(onPlatformStanding),
+		eventHum.Swimming:connect(onSwimming)
+	}
+end
+
+RepHumanoid.Changed:Connect(function()
+	eventHum = RepHumanoid.Value
+	onHook()
+end)
+
+RepHumanoid.Value = Humanoid
+
+-- setup emote chat hook
+game:GetService("Players").LocalPlayer.Chatted:connect(function(msg)
+	local emote = ""
+	if (string.sub(msg, 1, 3) == "/e ") then
+		emote = string.sub(msg, 4)
+	elseif (string.sub(msg, 1, 7) == "/emote ") then
+		emote = string.sub(msg, 8)
+	end
+	
+	if (pose == "Standing" and emoteNames[emote] ~= nil) then
+		playAnimation(emote, EMOTE_TRANSITION_TIME, Humanoid)
+	end
+end)
+
+-- emote bindable hook
+if FFlagAnimateScriptEmoteHook then
+	script:WaitForChild("PlayEmote").OnInvoke = function(emote)
+		-- Only play emotes when idling
+		if pose ~= "Standing" then
+			return
+		end
+	
+		if emoteNames[emote] ~= nil then
+			-- Default emotes
+			playAnimation(emote, EMOTE_TRANSITION_TIME, Humanoid)
+			
+			return true
+		elseif typeof(emote) == "Instance" and emote:IsA("Animation") then
+			-- Non-default emotes
+			playEmote(emote, EMOTE_TRANSITION_TIME, Humanoid)
+			return true
+		end
+		
+		-- Return false to indicate that the emote could not be played
+		return false
+	end
+end
+
+-- initialize to idle
+playAnimation("idle", 0.1, Humanoid)
+pose = "Standing"
+
+	-- loop to handle timed state transitions and tool animations
+spawn(function()
+	while Character.Parent ~= nil do
+		local _, currentGameTime = wait(0.1)
+		stepAnimate(currentGameTime)
+	end
+end)
+	
+return {
+	onRunning = onRunning, 
+	onDied = onDied, 
+	onJumping = onJumping, 
+	onClimbing = onClimbing, 
+	onGettingUp = onGettingUp, 
+	onFreeFall = onFreeFall, 
+	onFallingDown = onFallingDown, 
+	onSeated = onSeated, 
+	onPlatformStanding = onPlatformStanding,
+	onHook = onHook,
+	onUnhook = onUnhook
+}
+
+]]></string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="7">
+          <Properties>
+            <string name="Name">R6</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source">local script = script.Parent
+	
+local Figure = script.Parent
+local Torso = Figure:WaitForChild("Torso")
+local RightShoulder = Torso:WaitForChild("Right Shoulder")
+local LeftShoulder = Torso:WaitForChild("Left Shoulder")
+local RightHip = Torso:WaitForChild("Right Hip")
+local LeftHip = Torso:WaitForChild("Left Hip")
+local Neck = Torso:WaitForChild("Neck")
+local Humanoid = Figure:WaitForChild("Humanoid")
+local pose = "Standing"
+
+local currentAnim = ""
+local currentAnimInstance = nil
+local currentAnimTrack = nil
+local currentAnimKeyframeHandler = nil
+local currentAnimSpeed = 1.0
+local animTable = {}
+local animNames = { 
+	idle = 	{	
+				{ id = "http://www.roblox.com/asset/?id=180435571", weight = 9 },
+				{ id = "http://www.roblox.com/asset/?id=180435792", weight = 1 }
+			},
+	walk = 	{ 	
+				{ id = "http://www.roblox.com/asset/?id=180426354", weight = 10 } 
+			}, 
+	run = 	{
+				{ id = "run.xml", weight = 10 } 
+			}, 
+	jump = 	{
+				{ id = "http://www.roblox.com/asset/?id=125750702", weight = 10 } 
+			}, 
+	fall = 	{
+				{ id = "http://www.roblox.com/asset/?id=180436148", weight = 10 } 
+			}, 
+	climb = {
+				{ id = "http://www.roblox.com/asset/?id=180436334", weight = 10 } 
+			}, 
+	sit = 	{
+				{ id = "http://www.roblox.com/asset/?id=178130996", weight = 10 } 
+			},	
+	toolnone = {
+				{ id = "http://www.roblox.com/asset/?id=182393478", weight = 10 } 
+			},
+	toolslash = {
+				{ id = "http://www.roblox.com/asset/?id=129967390", weight = 10 } 
+--				{ id = "slash.xml", weight = 10 } 
+			},
+	toollunge = {
+				{ id = "http://www.roblox.com/asset/?id=129967478", weight = 10 } 
+			},
+	wave = {
+				{ id = "http://www.roblox.com/asset/?id=128777973", weight = 10 } 
+			},
+	point = {
+				{ id = "http://www.roblox.com/asset/?id=128853357", weight = 10 } 
+			},
+	dance1 = {
+				{ id = "http://www.roblox.com/asset/?id=182435998", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=182491037", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=182491065", weight = 10 } 
+			},
+	dance2 = {
+				{ id = "http://www.roblox.com/asset/?id=182436842", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=182491248", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=182491277", weight = 10 } 
+			},
+	dance3 = {
+				{ id = "http://www.roblox.com/asset/?id=182436935", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=182491368", weight = 10 }, 
+				{ id = "http://www.roblox.com/asset/?id=182491423", weight = 10 } 
+			},
+	laugh = {
+				{ id = "http://www.roblox.com/asset/?id=129423131", weight = 10 } 
+			},
+	cheer = {
+				{ id = "http://www.roblox.com/asset/?id=129423030", weight = 10 } 
+			},
+}
+local dances = {"dance1", "dance2", "dance3"}
+
+-- Existance in this list signifies that it is an emote, the value indicates if it is a looping emote
+local emoteNames = { wave = false, point = false, dance1 = true, dance2 = true, dance3 = true, laugh = false, cheer = false}
+
+function configureAnimationSet(name, fileList)
+	if (animTable[name] ~= nil) then
+		for _, connection in pairs(animTable[name].connections) do
+			connection:disconnect()
+		end
+	end
+	animTable[name] = {}
+	animTable[name].count = 0
+	animTable[name].totalWeight = 0	
+	animTable[name].connections = {}
+
+	-- check for config values
+	local config = script:FindFirstChild(name)
+	if (config ~= nil) then
+--		print("Loading anims " .. name)
+		table.insert(animTable[name].connections, config.ChildAdded:connect(function(child) configureAnimationSet(name, fileList) end))
+		table.insert(animTable[name].connections, config.ChildRemoved:connect(function(child) configureAnimationSet(name, fileList) end))
+		local idx = 1
+		for _, childPart in pairs(config:GetChildren()) do
+			if (childPart:IsA("Animation")) then
+				table.insert(animTable[name].connections, childPart.Changed:connect(function(property) configureAnimationSet(name, fileList) end))
+				animTable[name][idx] = {}
+				animTable[name][idx].anim = childPart
+				local weightObject = childPart:FindFirstChild("Weight")
+				if (weightObject == nil) then
+					animTable[name][idx].weight = 1
+				else
+					animTable[name][idx].weight = weightObject.Value
+				end
+				animTable[name].count = animTable[name].count + 1
+				animTable[name].totalWeight = animTable[name].totalWeight + animTable[name][idx].weight
+	--			print(name .. " [" .. idx .. "] " .. animTable[name][idx].anim.AnimationId .. " (" .. animTable[name][idx].weight .. ")")
+				idx = idx + 1
+			end
+		end
+	end
+
+	-- fallback to defaults
+	if (animTable[name].count &lt;= 0) then
+		for idx, anim in pairs(fileList) do
+			animTable[name][idx] = {}
+			animTable[name][idx].anim = Instance.new("Animation")
+			animTable[name][idx].anim.Name = name
+			animTable[name][idx].anim.AnimationId = anim.id
+			animTable[name][idx].weight = anim.weight
+			animTable[name].count = animTable[name].count + 1
+			animTable[name].totalWeight = animTable[name].totalWeight + anim.weight
+--			print(name .. " [" .. idx .. "] " .. anim.id .. " (" .. anim.weight .. ")")
+		end
+	end
+end
+
+-- Setup animation objects
+function scriptChildModified(child)
+	local fileList = animNames[child.Name]
+	if (fileList ~= nil) then
+		configureAnimationSet(child.Name, fileList)
+	end	
+end
+
+script.ChildAdded:connect(scriptChildModified)
+script.ChildRemoved:connect(scriptChildModified)
+
+
+for name, fileList in pairs(animNames) do 
+	configureAnimationSet(name, fileList)
+end	
+
+-- ANIMATION
+
+-- declarations
+local toolAnim = "None"
+local toolAnimTime = 0
+
+local jumpAnimTime = 0
+local jumpAnimDuration = 0.3
+
+local toolTransitionTime = 0.1
+local fallTransitionTime = 0.3
+local jumpMaxLimbVelocity = 0.75
+
+-- functions
+
+function stopAllAnimations()
+	local oldAnim = currentAnim
+
+	-- return to idle if finishing an emote
+	if (emoteNames[oldAnim] ~= nil and emoteNames[oldAnim] == false) then
+		oldAnim = "idle"
+	end
+
+	currentAnim = ""
+	currentAnimInstance = nil
+	if (currentAnimKeyframeHandler ~= nil) then
+		currentAnimKeyframeHandler:disconnect()
+	end
+
+	if (currentAnimTrack ~= nil) then
+		currentAnimTrack:Stop()
+		currentAnimTrack:Destroy()
+		currentAnimTrack = nil
+	end
+	return oldAnim
+end
+
+function setAnimationSpeed(speed)
+	if speed ~= currentAnimSpeed then
+		currentAnimSpeed = speed
+		currentAnimTrack:AdjustSpeed(currentAnimSpeed)
+	end
+end
+
+function keyFrameReachedFunc(frameName)
+	if (frameName == "End") then
+
+		local repeatAnim = currentAnim
+		-- return to idle if finishing an emote
+		if (emoteNames[repeatAnim] ~= nil and emoteNames[repeatAnim] == false) then
+			repeatAnim = "idle"
+		end
+		
+		local animSpeed = currentAnimSpeed
+		playAnimation(repeatAnim, 0.0, Humanoid)
+		setAnimationSpeed(animSpeed)
+	end
+end
+
+-- Preload animations
+function playAnimation(animName, transitionTime, humanoid) 
+		
+	local roll = math.random(1, animTable[animName].totalWeight) 
+	local origRoll = roll
+	local idx = 1
+	while (roll > animTable[animName][idx].weight) do
+		roll = roll - animTable[animName][idx].weight
+		idx = idx + 1
+	end
+--		print(animName .. " " .. idx .. " [" .. origRoll .. "]")
+	local anim = animTable[animName][idx].anim
+
+	-- switch animation		
+	if (anim ~= currentAnimInstance) then
+		
+		if (currentAnimTrack ~= nil) then
+			currentAnimTrack:Stop(transitionTime)
+			currentAnimTrack:Destroy()
+		end
+
+		currentAnimSpeed = 1.0
+	
+		-- load it to the humanoid; get AnimationTrack
+		currentAnimTrack = humanoid:LoadAnimation(anim)
+		currentAnimTrack.Priority = Enum.AnimationPriority.Core
+		
+		-- play the animation
+		currentAnimTrack:Play(transitionTime)
+		currentAnim = animName
+		currentAnimInstance = anim
+
+		-- set up keyframe name triggers
+		if (currentAnimKeyframeHandler ~= nil) then
+			currentAnimKeyframeHandler:disconnect()
+		end
+		currentAnimKeyframeHandler = currentAnimTrack.KeyframeReached:connect(keyFrameReachedFunc)
+		
+	end
+
+end
+
+-------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+
+local toolAnimName = ""
+local toolAnimTrack = nil
+local toolAnimInstance = nil
+local currentToolAnimKeyframeHandler = nil
+
+function toolKeyFrameReachedFunc(frameName)
+	if (frameName == "End") then
+--		print("Keyframe : ".. frameName)	
+		playToolAnimation(toolAnimName, 0.0, Humanoid)
+	end
+end
+
+
+function playToolAnimation(animName, transitionTime, humanoid, priority)	 
+		
+		local roll = math.random(1, animTable[animName].totalWeight) 
+		local origRoll = roll
+		local idx = 1
+		while (roll > animTable[animName][idx].weight) do
+			roll = roll - animTable[animName][idx].weight
+			idx = idx + 1
+		end
+--		print(animName .. " * " .. idx .. " [" .. origRoll .. "]")
+		local anim = animTable[animName][idx].anim
+
+		if (toolAnimInstance ~= anim) then
+			
+			if (toolAnimTrack ~= nil) then
+				toolAnimTrack:Stop()
+				toolAnimTrack:Destroy()
+				transitionTime = 0
+			end
+					
+			-- load it to the humanoid; get AnimationTrack
+			toolAnimTrack = humanoid:LoadAnimation(anim)
+			if priority then
+				toolAnimTrack.Priority = priority
+			end
+			
+			-- play the animation
+			toolAnimTrack:Play(transitionTime)
+			toolAnimName = animName
+			toolAnimInstance = anim
+
+			currentToolAnimKeyframeHandler = toolAnimTrack.KeyframeReached:connect(toolKeyFrameReachedFunc)
+		end
+end
+
+function stopToolAnimations()
+	local oldAnim = toolAnimName
+
+	if (currentToolAnimKeyframeHandler ~= nil) then
+		currentToolAnimKeyframeHandler:disconnect()
+	end
+
+	toolAnimName = ""
+	toolAnimInstance = nil
+	if (toolAnimTrack ~= nil) then
+		toolAnimTrack:Stop()
+		toolAnimTrack:Destroy()
+		toolAnimTrack = nil
+	end
+
+
+	return oldAnim
+end
+
+-------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
+
+
+function onRunning(speed)
+	if speed > 0.01 then
+		playAnimation("walk", 0.1, Humanoid)
+		if currentAnimInstance and currentAnimInstance.AnimationId == "http://www.roblox.com/asset/?id=180426354" then
+			setAnimationSpeed(speed / 14.5)
+		end
+		pose = "Running"
+	else
+		if emoteNames[currentAnim] == nil then
+			playAnimation("idle", 0.1, Humanoid)
+			pose = "Standing"
+		end
+	end
+end
+
+function onDied()
+	pose = "Dead"
+end
+
+function onJumping()
+	playAnimation("jump", 0.1, Humanoid)
+	jumpAnimTime = jumpAnimDuration
+	pose = "Jumping"
+end
+
+function onClimbing(speed)
+	playAnimation("climb", 0.1, Humanoid)
+	setAnimationSpeed(speed / 12.0)
+	pose = "Climbing"
+end
+
+function onGettingUp()
+	pose = "GettingUp"
+end
+
+function onFreeFall()
+	if (jumpAnimTime &lt;= 0) then
+		playAnimation("fall", fallTransitionTime, Humanoid)
+	end
+	pose = "FreeFall"
+end
+
+function onFallingDown()
+	pose = "FallingDown"
+end
+
+function onSeated()
+	pose = "Seated"
+end
+
+function onPlatformStanding()
+	pose = "PlatformStanding"
+end
+
+function onSwimming(speed)
+	if speed > 0 then
+		pose = "Running"
+	else
+		pose = "Standing"
+	end
+end
+
+function getTool()	
+	for _, kid in ipairs(Figure:GetChildren()) do
+		if kid.className == "Tool" then return kid end
+	end
+	return nil
+end
+
+function getToolAnim(tool)
+	for _, c in ipairs(tool:GetChildren()) do
+		if c.Name == "toolanim" and c.className == "StringValue" then
+			return c
+		end
+	end
+	return nil
+end
+
+function animateTool()
+	
+	if (toolAnim == "None") then
+		playToolAnimation("toolnone", toolTransitionTime, Humanoid, Enum.AnimationPriority.Idle)
+		return
+	end
+
+	if (toolAnim == "Slash") then
+		playToolAnimation("toolslash", 0, Humanoid, Enum.AnimationPriority.Action)
+		return
+	end
+
+	if (toolAnim == "Lunge") then
+		playToolAnimation("toollunge", 0, Humanoid, Enum.AnimationPriority.Action)
+		return
+	end
+end
+
+function moveSit()
+	RightShoulder.MaxVelocity = 0.15
+	LeftShoulder.MaxVelocity = 0.15
+	RightShoulder:SetDesiredAngle(3.14 /2)
+	LeftShoulder:SetDesiredAngle(-3.14 /2)
+	RightHip:SetDesiredAngle(3.14 /2)
+	LeftHip:SetDesiredAngle(-3.14 /2)
+end
+
+local lastTick = 0
+
+function move(time)
+	local amplitude = 1
+	local frequency = 1
+	local deltaTime = time - lastTick
+	lastTick = time
+
+	local climbFudge = 0
+	local setAngles = false
+
+	if (jumpAnimTime > 0) then
+		jumpAnimTime = jumpAnimTime - deltaTime
+	end
+
+	if (pose == "FreeFall" and jumpAnimTime &lt;= 0) then
+		playAnimation("fall", fallTransitionTime, Humanoid)
+	elseif (pose == "Seated") then
+		playAnimation("sit", 0.5, Humanoid)
+		return
+	elseif (pose == "Running") then
+		playAnimation("walk", 0.1, Humanoid)
+	elseif (pose == "Dead" or pose == "GettingUp" or pose == "FallingDown" or pose == "Seated" or pose == "PlatformStanding") then
+--		print("Wha " .. pose)
+		stopAllAnimations()
+		amplitude = 0.1
+		frequency = 1
+		setAngles = true
+	end
+
+	if (setAngles) then
+		local desiredAngle = amplitude * math.sin(time * frequency)
+
+		RightShoulder:SetDesiredAngle(desiredAngle + climbFudge)
+		LeftShoulder:SetDesiredAngle(desiredAngle - climbFudge)
+		RightHip:SetDesiredAngle(-desiredAngle)
+		LeftHip:SetDesiredAngle(-desiredAngle)
+	end
+
+	-- Tool Animation handling
+	local tool = getTool()
+	if tool and tool:FindFirstChild("Handle") then
+	
+		local animStringValueObject = getToolAnim(tool)
+
+		if animStringValueObject then
+			toolAnim = animStringValueObject.Value
+			-- message recieved, delete StringValue
+			animStringValueObject.Parent = nil
+			toolAnimTime = time + .3
+		end
+
+		if time > toolAnimTime then
+			toolAnimTime = 0
+			toolAnim = "None"
+		end
+
+		animateTool()		
+	else
+		stopToolAnimations()
+		toolAnim = "None"
+		toolAnimInstance = nil
+		toolAnimTime = 0
+	end
+end
+
+
+local events = {}
+local eventHum = Humanoid
+local RepHumanoid = script:WaitForChild("ReplicatedHumanoid")
+	
+local function onUnhook()
+	for i = 1, #events do
+		events[i]:Disconnect()
+	end
+	events = {}
+end
+	
+local function onHook()
+	onUnhook()
+	
+	pose = Humanoid.Sit and "Seated" or "Standing"
+	
+	events = {
+		eventHum.Died:connect(onDied),
+		eventHum.Running:connect(onRunning),
+		eventHum.Jumping:connect(onJumping),
+		eventHum.Climbing:connect(onClimbing),
+		eventHum.GettingUp:connect(onGettingUp),
+		eventHum.FreeFalling:connect(onFreeFall),
+		eventHum.FallingDown:connect(onFallingDown),
+		eventHum.Seated:connect(onSeated),
+		eventHum.PlatformStanding:connect(onPlatformStanding),
+		eventHum.Swimming:connect(onSwimming)
+	}
+end
+
+RepHumanoid.Changed:Connect(function()
+	eventHum = RepHumanoid.Value
+	onHook()
+end)
+
+RepHumanoid.Value = Humanoid
+
+-- setup emote chat hook
+game:GetService("Players").LocalPlayer.Chatted:connect(function(msg)
+	local emote = ""
+	if msg == "/e dance" then
+		emote = dances[math.random(1, #dances)]
+	elseif (string.sub(msg, 1, 3) == "/e ") then
+		emote = string.sub(msg, 4)
+	elseif (string.sub(msg, 1, 7) == "/emote ") then
+		emote = string.sub(msg, 8)
+	end
+	
+	if (pose == "Standing" and emoteNames[emote] ~= nil) then
+		playAnimation(emote, 0.1, Humanoid)
+	end
+
+end)
+
+
+-- main program
+
+-- initialize to idle
+playAnimation("idle", 0.1, Humanoid)
+pose = "Standing"
+	
+spawn(function()
+	while Figure.Parent ~= nil do
+		local _, time = wait(0.1)
+		move(time)
+	end
+end)
+	
+return {
+	onRunning = onRunning, 
+	onDied = onDied, 
+	onJumping = onJumping, 
+	onClimbing = onClimbing, 
+	onGettingUp = onGettingUp, 
+	onFreeFall = onFreeFall, 
+	onFallingDown = onFallingDown, 
+	onSeated = onSeated, 
+	onPlatformStanding = onPlatformStanding,
+	onHook = onHook,
+	onUnhook = onUnhook
+}</string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+        <Item class="ObjectValue" referent="8">
+          <Properties>
+            <string name="Name">ReplicatedHumanoid</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+            <Ref name="Value">null</Ref>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="9">
+          <Properties>
+            <string name="Name">VerifyAnims</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source">local LENGTH = string.len("Animation")
+
+local DESC_ANIM_PROPS = {
+	["ClimbAnimation"] = true,
+	["FallAnimation"] = true,
+	["IdleAnimation"] = true,
+	["JumpAnimation"] = true,
+	["RunAnimation"] = true,
+	["SwimAnimation"] = true,
+	["WalkAnimation"] = true,
+}
+
+return function(humanoid, animate)
+	local desc = humanoid:GetAppliedDescription()
+	
+	if humanoid.RigType == Enum.HumanoidRigType.R6 then
+		return
+	end
+	
+	for prop, _ in pairs(DESC_ANIM_PROPS) do
+		if desc[prop] > 0 then
+			local lookFor = prop:sub(1, #prop - LENGTH):lower()
+			animate:WaitForChild(lookFor)
+		end
+	end
+end</string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+      </Item>
+      <Item class="LocalScript" referent="10">
+        <Properties>
+          <string name="Name">PlayerScriptsLoader</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="DefinesCapabilities">false</bool>
+          <bool name="Disabled">false</bool>
+          <Content name="LinkedSource">
+            <null>
+            </null>
+          </Content>
+          <token name="RunContext">0</token>
+          <string name="Source">--[[
+	PlayerScriptsLoader - This script requires and instantiates the PlayerModule singleton
+
+	2018 PlayerScripts Update - AllYourBlox
+	2020 CameraModule Public Access Override &amp; modifications - EgoMoose
+--]]
+
+local MIN_Y = math.rad(-80)
+local MAX_Y = math.rad(80)
+local ZERO3 = Vector3.new(0, 0, 0)
+
+local PlayerModule = script.Parent:WaitForChild("PlayerModule")
+local CameraInjector = script:WaitForChild("CameraInjector")
+
+require(CameraInjector)
+
+-- Control Modifications
+
+local Control = require(PlayerModule:WaitForChild("ControlModule"))
+local TouchJump = require(PlayerModule.ControlModule:WaitForChild("TouchJump"))
+
+function Control:IsJumping()
+	if self.activeController then
+		return self.activeController:GetIsJumping()
+			or (self.touchJumpController and self.touchJumpController:GetIsJumping())
+	end
+	return false
+end
+
+local oldEnabled = TouchJump.UpdateEnabled
+
+function TouchJump:UpdateEnabled()
+	self.jumpStateEnabled = true
+	oldEnabled(self)
+end
+
+-- Camera Modifications
+
+local CameraModule = PlayerModule:WaitForChild("CameraModule")
+
+local UserSettings = require(script:WaitForChild("FakeUserSettings"))
+local UserGameSettings = UserSettings():GetService("UserGameSettings")
+
+local FFlagUserFlagEnableNewVRSystem = UserSettings():SafeIsUserFeatureEnabled("UserFlagEnableNewVRSystem")
+
+-- Camera variables
+
+local transitionRate = 0.15
+local upVector = Vector3.new(0, 1, 0)
+local upCFrame = CFrame.new()
+
+local spinPart = workspace.Terrain
+local prevSpinPart = spinPart
+local prevSpinCFrame = spinPart.CFrame
+local twistCFrame = CFrame.new()
+
+-- Camera Utilities
+
+local Utils = require(CameraModule:WaitForChild("CameraUtils"))
+
+function Utils.GetAngleBetweenXZVectors(v1, v2)
+	v1 = upCFrame:VectorToObjectSpace(v1)
+	v2 = upCFrame:VectorToObjectSpace(v2)
+	return math.atan2(v2.X*v1.Z-v2.Z*v1.X, v2.X*v1.X+v2.Z*v1.Z)
+end
+
+-- Popper Camera
+
+local Poppercam = require(CameraModule:WaitForChild("Poppercam"))
+local ZoomController = require(CameraModule:WaitForChild("ZoomController"))
+
+function Poppercam:Update(renderDt, desiredCameraCFrame, desiredCameraFocus, cameraController)
+	local rotatedFocus = desiredCameraFocus * (desiredCameraCFrame - desiredCameraCFrame.p)
+	local extrapolation = self.focusExtrapolator:Step(renderDt, rotatedFocus)
+	local zoom = ZoomController.Update(renderDt, rotatedFocus, extrapolation)
+	return rotatedFocus*CFrame.new(0, 0, zoom), desiredCameraFocus
+end
+
+-- Base Camera
+
+local BaseCamera = require(CameraModule:WaitForChild("BaseCamera"))
+
+function BaseCamera:CalculateNewLookCFrameFromArg(suppliedLookVector, rotateInput)
+	local currLookVector = suppliedLookVector or self:GetCameraLookVector()
+	currLookVector = upCFrame:VectorToObjectSpace(currLookVector)
+
+	local currPitchAngle = math.asin(currLookVector.y)
+	local yTheta = math.clamp(rotateInput.y, -MAX_Y + currPitchAngle, -MIN_Y + currPitchAngle)
+	local constrainedRotateInput = Vector2.new(rotateInput.x, yTheta)
+	local startCFrame = CFrame.new(ZERO3, currLookVector)
+	local newLookCFrame = CFrame.Angles(0, -constrainedRotateInput.x, 0) * startCFrame * CFrame.Angles(-constrainedRotateInput.y,0,0)
+
+	return newLookCFrame
+end
+
+function BaseCamera:CalculateNewLookCFrame(suppliedLookVector)
+	return self:CalculateNewLookCFrameFromArg(suppliedLookVector, self.rotateInput)
+end
+
+local defaultUpdateMouseBehavior = BaseCamera.UpdateMouseBehavior
+
+function BaseCamera:UpdateMouseBehavior()
+	defaultUpdateMouseBehavior(self)
+	if UserGameSettings.RotationType == Enum.RotationType.CameraRelative then
+		UserGameSettings.RotationType = Enum.RotationType.MovementRelative
+	end
+end
+
+-- Vehicle Camera
+
+local VehicleCamera = require(CameraModule:WaitForChild("VehicleCamera"))
+local VehicleCameraCore = require(CameraModule.VehicleCamera:WaitForChild("VehicleCameraCore"))
+local setTransform = VehicleCameraCore.setTransform
+
+function VehicleCameraCore:setTransform(transform)
+	transform = upCFrame:ToObjectSpace(transform - transform.p) + transform.p
+	return setTransform(self, transform)
+end
+
+-- Camera Module
+
+local function getRotationBetween(u, v, axis)
+	local dot, uxv = u:Dot(v), u:Cross(v)
+	if dot &lt; -0.99999 then return CFrame.fromAxisAngle(axis, math.pi) end
+	return CFrame.new(0, 0, 0, uxv.x, uxv.y, uxv.z, 1 + dot)
+end
+
+local function twistAngle(cf, direction)
+	local axis, theta = cf:ToAxisAngle()
+	local w, v = math.cos(theta/2),  math.sin(theta/2)*axis
+	local proj = v:Dot(direction)*direction
+	local twist = CFrame.new(0, 0, 0, proj.x, proj.y, proj.z, w)
+	local nAxis, nTheta = twist:ToAxisAngle()
+	return math.sign(v:Dot(direction))*nTheta
+end
+
+local function calculateUpCFrame(self)
+	local newUpVector = self:GetUpVector(upVector)
+
+	local axis = workspace.CurrentCamera.CFrame.RightVector
+	local sphericalArc = getRotationBetween(upVector, newUpVector, axis)
+	local transitionCF = CFrame.new():Lerp(sphericalArc, transitionRate)
+
+	upVector = transitionCF * upVector
+	upCFrame = transitionCF * upCFrame
+end
+
+local function calculateSpinCFrame(self)
+	local theta = 0
+	
+	if spinPart == prevSpinPart then
+		local rotation = spinPart.CFrame - spinPart.CFrame.p
+		local prevRotation = prevSpinCFrame - prevSpinCFrame.p
+
+		local spinAxis = rotation:VectorToObjectSpace(upVector)
+		theta = twistAngle(prevRotation:ToObjectSpace(rotation), spinAxis)
+	end
+
+	twistCFrame = CFrame.fromEulerAnglesYXZ(0, theta, 0)
+
+	prevSpinPart = spinPart
+	prevSpinCFrame = spinPart.CFrame
+end
+
+local Camera = require(CameraModule)
+local CameraInput = require(CameraModule:WaitForChild("CameraInput"))
+
+function Camera:GetUpVector(oldUpVector)
+	return oldUpVector
+end
+
+function Camera:SetSpinPart(part)
+	spinPart = part
+end
+
+function Camera:SetTransitionRate(rate)
+	transitionRate = rate
+end
+
+function Camera:GetTransitionRate()
+	return transitionRate
+end
+
+function Camera:Update(dt)
+	if self.activeCameraController then
+		self.activeCameraController:UpdateMouseBehavior()
+
+		local newCameraCFrame, newCameraFocus = self.activeCameraController:Update(dt)
+		newCameraFocus = CFrame.new(newCameraFocus.p) -- vehicle camera fix
+		
+--		if not FFlagUserFlagEnableNewVRSystem then
+			--self.activeCameraController:ApplyVRTransform()
+--		end
+		
+		calculateUpCFrame(self, dt)
+		calculateSpinCFrame(self)
+		
+		local lockOffset = Vector3.new(0, 0, 0)
+		if self.activeMouseLockController and self.activeMouseLockController:GetIsMouseLocked() then
+			lockOffset = self.activeMouseLockController:GetMouseLockOffset()
+		end
+		
+		local offset = newCameraFocus:ToObjectSpace(newCameraCFrame)
+		local camRotation = upCFrame * twistCFrame * offset
+		newCameraFocus = newCameraFocus - newCameraCFrame:VectorToWorldSpace(lockOffset) + camRotation:VectorToWorldSpace(lockOffset)
+		newCameraCFrame = newCameraFocus * camRotation
+		
+		if self.activeOcclusionModule then
+			newCameraCFrame, newCameraFocus = self.activeOcclusionModule:Update(dt, newCameraCFrame, newCameraFocus)
+		end
+
+		-- Here is where the new CFrame and Focus are set for this render frame
+		game.Workspace.CurrentCamera.CFrame = newCameraCFrame
+		game.Workspace.CurrentCamera.Focus = newCameraFocus
+
+		-- Update to character local transparency as needed based on camera-to-subject distance
+		if self.activeTransparencyController then
+			self.activeTransparencyController:Update(dt)
+		end
+
+		if CameraInput.getInputEnabled() then
+			CameraInput.resetInputForFrameEnd()
+		end
+	end
+end
+
+function Camera:IsFirstPerson()
+	if self.activeCameraController then
+		return self.activeCameraController.inFirstPerson
+	end
+	return false
+end
+
+function Camera:IsMouseLocked()
+	if self.activeCameraController then
+		return self.activeCameraController:GetIsMouseLocked()
+	end
+	return false
+end
+
+function Camera:IsToggleMode()
+	if self.activeCameraController then
+		return self.activeCameraController.isCameraToggle
+	end
+	return false
+end
+
+function Camera:IsCamRelative()
+	return self:IsMouseLocked() or self:IsFirstPerson()
+	--return self:IsToggleMode(), self:IsMouseLocked(), self:IsFirstPerson()
+end
+
+--
+
+require(PlayerModule)</string>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+        <Item class="ModuleScript" referent="11">
+          <Properties>
+            <string name="Name">CameraInjector</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source"><![CDATA[-- Injects into the CameraModule to override for public API access
+-- EgoMoose
+
+local FakeUserSettingsFunc = require(script.Parent:WaitForChild("FakeUserSettings"))
+
+-- Camera Injection
+
+local PlayerModule = script.Parent.Parent:WaitForChild("PlayerModule")
+local CameraModule = PlayerModule:WaitForChild("CameraModule")
+local TransparencyController = require(CameraModule:WaitForChild("TransparencyController"))
+
+local result = nil
+local copy = TransparencyController.Enable
+local bind = Instance.new("BindableEvent")
+
+local CameraModuleSelf = nil
+local CameraModuleMeta = nil
+
+local metasetmetatable = function(newTable:{}, newMeta:{})
+	local env = getfenv(2)
+	if env.script==CameraModule then
+		CameraModuleSelf = newTable
+		CameraModuleMeta = newMeta
+	end
+	return setmetatable(newTable, newMeta)
+end
+
+local phaseTwoEnable = function(self, ...)
+	local env = getfenv(3)
+	env.setmetatable = nil
+	setfenv(3, env)
+
+	TransparencyController.Enable = copy
+	return copy(self, ...)
+end
+
+TransparencyController.Enable = function(self, ...)
+	copy(self, ...)
+
+	local env = getfenv(3)
+	env.UserSettings = FakeUserSettingsFunc
+	env.setmetatable = metasetmetatable
+	local f = setfenv(3, env)
+
+	TransparencyController.Enable = phaseTwoEnable
+
+	result = f()
+	if result.ActivateCameraController==nil 
+		and typeof(CameraModuleSelf)=="table"
+		and typeof(CameraModuleSelf.ActivateCameraController)=="function" then
+		result = CameraModuleSelf	
+	end
+	bind.Event:Wait() -- infinite wait so no more connections can be made
+end
+
+coroutine.wrap(function()
+	require(CameraModule)
+end)()
+
+-- Place children under injection
+
+for _, child in pairs(CameraModule:GetChildren()) do
+	child.Parent = script
+end
+
+CameraModule.Name = "_CameraModule"
+script.Name = "CameraModule"
+script.Parent = PlayerModule
+
+--
+
+return result
+]]></string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="12">
+          <Properties>
+            <string name="Name">FakeUserSettings</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source">local FFLAG_OVERRIDES = {
+	["UserRemoveTheCameraApi"] = false
+}
+
+local FakeUserSettings = {}
+
+function FakeUserSettings:IsUserFeatureEnabled(name)
+	if FFLAG_OVERRIDES[name] ~= nil then
+		return FFLAG_OVERRIDES[name]
+	end
+	return UserSettings():IsUserFeatureEnabled(name)
+end
+
+function FakeUserSettings:SafeIsUserFeatureEnabled(name)
+	local success, result = pcall(function()
+		return self:IsUserFeatureEnabled(name)
+	end)
+	return success and result
+end
+
+function FakeUserSettings:GetService(name)
+	return UserSettings():GetService(name)
+end
+
+local function FakeUserSettingsFunc()
+	return FakeUserSettings
+end
+
+return FakeUserSettingsFunc</string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+      </Item>
+      <Item class="LocalScript" referent="13">
+        <Properties>
+          <string name="Name">RbxCharacterSounds</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="DefinesCapabilities">false</bool>
+          <bool name="Disabled">false</bool>
+          <Content name="LinkedSource">
+            <null>
+            </null>
+          </Content>
+          <token name="RunContext">0</token>
+          <string name="Source"><![CDATA[-- Roblox character sound script
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local AnimationState = require(script:WaitForChild("AnimationState"))
+
+local SOUND_DATA = {
+	Climbing = {
+		SoundId = "rbxasset://sounds/action_footsteps_plastic.mp3",
+		Looped = true,
+	},
+	Died = {
+		SoundId = "rbxasset://sounds/uuhhh.mp3",
+	},
+	FreeFalling = {
+		SoundId = "rbxasset://sounds/action_falling.mp3",
+		Looped = true,
+	},
+	GettingUp = {
+		SoundId = "rbxasset://sounds/action_get_up.mp3",
+	},
+	Jumping = {
+		SoundId = "rbxasset://sounds/action_jump.mp3",
+	},
+	Landing = {
+		SoundId = "rbxasset://sounds/action_jump_land.mp3",
+	},
+	Running = {
+		SoundId = "rbxasset://sounds/action_footsteps_plastic.mp3",
+		Looped = true,
+		Pitch = 1.85,
+	},
+	Splash = {
+		SoundId = "rbxasset://sounds/impact_water.mp3",
+	},
+	Swimming = {
+		SoundId = "rbxasset://sounds/action_swim.mp3",
+		Looped = true,
+		Pitch = 1.6,
+	},
+}
+
+ -- wait for the first of the passed signals to fire
+local function waitForFirst(...)
+	local shunt = Instance.new("BindableEvent")
+	local slots = {...}
+
+	local function fire(...)
+		for i = 1, #slots do
+			slots[i]:Disconnect()
+		end
+
+		return shunt:Fire(...)
+	end
+
+	for i = 1, #slots do
+		slots[i] = slots[i]:Connect(fire)
+	end
+
+	return shunt.Event:Wait()
+end
+
+-- map a value from one range to another
+local function map(x, inMin, inMax, outMin, outMax)
+	return (x - inMin)*(outMax - outMin)/(inMax - inMin) + outMin
+end
+
+local function playSound(sound)
+	sound.TimePosition = 0
+	sound.Playing = true
+end
+
+local function shallowCopy(t)
+	local out = {}
+	for k, v in pairs(t) do
+		out[k] = v
+	end
+	return out
+end
+
+local function initializeSoundSystem(player, humanoid, rootPart)
+	local sounds = {}
+
+	-- initialize sounds
+	for name, props in pairs(SOUND_DATA) do
+		local sound = Instance.new("Sound")
+		sound.Name = name
+
+		-- set default values
+		sound.Archivable = false
+		sound.EmitterSize = 5
+		sound.MaxDistance = 150
+		sound.Volume = 0.65
+
+		for propName, propValue in pairs(props) do
+			sound[propName] = propValue
+		end
+
+		sound.Parent = rootPart
+		sounds[name] = sound
+	end
+
+	local playingLoopedSounds = {}
+
+	local function stopPlayingLoopedSounds(except)
+		for sound in pairs(shallowCopy(playingLoopedSounds)) do
+			if sound ~= except then
+				sound.Playing = false
+				playingLoopedSounds[sound] = nil
+			end
+		end
+	end
+
+	-- state transition callbacks
+	local stateTransitions = {
+		[Enum.HumanoidStateType.FallingDown] = function()
+			stopPlayingLoopedSounds()
+		end,
+
+		[Enum.HumanoidStateType.GettingUp] = function()
+			stopPlayingLoopedSounds()
+			playSound(sounds.GettingUp)
+		end,
+
+		[Enum.HumanoidStateType.Jumping] = function()
+			stopPlayingLoopedSounds()
+			playSound(sounds.Jumping)
+		end,
+
+		[Enum.HumanoidStateType.Swimming] = function()
+			local verticalSpeed = math.abs(rootPart.Velocity.Y)
+			if verticalSpeed > 0.1 then
+				sounds.Splash.Volume = math.clamp(map(verticalSpeed, 100, 350, 0.28, 1), 0, 1)
+				playSound(sounds.Splash)
+			end
+			stopPlayingLoopedSounds(sounds.Swimming)
+			sounds.Swimming.Playing = true
+			playingLoopedSounds[sounds.Swimming] = true
+		end,
+
+		[Enum.HumanoidStateType.Freefall] = function()
+			sounds.FreeFalling.Volume = 0
+			stopPlayingLoopedSounds(sounds.FreeFalling)
+			playingLoopedSounds[sounds.FreeFalling] = true
+		end,
+
+		[Enum.HumanoidStateType.Landed] = function()
+			stopPlayingLoopedSounds()
+			local verticalSpeed = math.abs(rootPart.Velocity.Y)
+			if verticalSpeed > 75 then
+				sounds.Landing.Volume = math.clamp(map(verticalSpeed, 50, 100, 0, 1), 0, 1)
+				playSound(sounds.Landing)
+			end
+		end,
+
+		[Enum.HumanoidStateType.Running] = function()
+			stopPlayingLoopedSounds(sounds.Running)
+			sounds.Running.Playing = true
+			playingLoopedSounds[sounds.Running] = true
+		end,
+
+		[Enum.HumanoidStateType.Climbing] = function()
+			local sound = sounds.Climbing
+			if math.abs(rootPart.Velocity.Y) > 0.1 then
+				sound.Playing = true
+				stopPlayingLoopedSounds(sound)
+			else
+				stopPlayingLoopedSounds()
+			end
+			playingLoopedSounds[sound] = true
+		end,
+
+		[Enum.HumanoidStateType.Seated] = function()
+			stopPlayingLoopedSounds()
+		end,
+
+		[Enum.HumanoidStateType.Dead] = function()
+			stopPlayingLoopedSounds()
+			playSound(sounds.Died)
+		end,
+	}
+
+	-- updaters for looped sounds
+	local loopedSoundUpdaters = {
+		[sounds.Climbing] = function(dt, sound, vel)
+			sound.Playing = vel.Magnitude > 0.1
+		end,
+
+		[sounds.FreeFalling] = function(dt, sound, vel)
+			if vel.Magnitude > 75 then
+				sound.Volume = math.clamp(sound.Volume + 0.9*dt, 0, 1)
+			else
+				sound.Volume = 0
+			end
+		end,
+
+		[sounds.Running] = function(dt, sound, vel)
+			sound.Playing = vel.Magnitude > 0.5 and humanoid.MoveDirection.Magnitude > 0.5
+		end,
+	}
+
+	-- state substitutions to avoid duplicating entries in the state table
+	local stateRemap = {
+		[Enum.HumanoidStateType.RunningNoPhysics] = Enum.HumanoidStateType.Running,
+	}
+
+	local activeState = stateRemap[humanoid:GetState()] or humanoid:GetState()
+	local animator = humanoid:WaitForChild("Animator")
+
+	local function onStateChange(_, state)
+		state = stateRemap[state] or state
+
+		if state ~= activeState then
+			local transitionFunc = stateTransitions[state]
+
+			if transitionFunc then
+				transitionFunc()
+			end
+
+			activeState = state
+		end
+	end
+
+	local stateChangedConn = humanoid.StateChanged:Connect(onStateChange)
+	local animStateChangedConn = AnimationState(animator, function(_, state)
+		if humanoid.PlatformStand then
+			onStateChange(_, state)
+		end
+	end)
+
+	local steppedConn = RunService.Stepped:Connect(function(_, worldDt)
+		-- update looped sounds on stepped
+		for sound in pairs(playingLoopedSounds) do
+			local updater = loopedSoundUpdaters[sound]
+
+			if updater then
+				updater(worldDt, sound, rootPart.Velocity)
+			end
+		end
+	end)
+
+	local humanoidAncestryChangedConn
+	local rootPartAncestryChangedConn
+	local characterAddedConn
+
+	local function terminate()
+		stateChangedConn:Disconnect()
+		animStateChangedConn:Disconnect()
+		steppedConn:Disconnect()
+		humanoidAncestryChangedConn:Disconnect()
+		rootPartAncestryChangedConn:Disconnect()
+		characterAddedConn:Disconnect()
+	end
+
+	humanoidAncestryChangedConn = humanoid.AncestryChanged:Connect(function(_, parent)
+		if not parent then
+			terminate()
+		end
+	end)
+
+	rootPartAncestryChangedConn = rootPart.AncestryChanged:Connect(function(_, parent)
+		if not parent then
+			terminate()
+		end
+	end)
+
+	characterAddedConn = player.CharacterAdded:Connect(terminate)
+end
+
+local function playerAdded(player)
+	local function characterAdded(character)
+		-- Avoiding memory leaks in the face of Character/Humanoid/RootPart lifetime has a few complications:
+		-- * character deparenting is a Remove instead of a Destroy, so signals are not cleaned up automatically.
+		-- ** must use a waitForFirst on everything and listen for hierarchy changes.
+		-- * the character might not be in the dm by the time CharacterAdded fires
+		-- ** constantly check consistency with player.Character and abort if CharacterAdded is fired again
+		-- * Humanoid may not exist immediately, and by the time it's inserted the character might be deparented.
+		-- * RootPart probably won't exist immediately.
+		-- ** by the time RootPart is inserted and Humanoid.RootPart is set, the character or the humanoid might be deparented.
+
+		if not character.Parent then
+			waitForFirst(character.AncestryChanged, player.CharacterAdded)
+		end
+
+		if player.Character ~= character or not character.Parent then
+			return
+		end
+
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		while character:IsDescendantOf(game) and not humanoid do
+			waitForFirst(character.ChildAdded, character.AncestryChanged, player.CharacterAdded)
+			humanoid = character:FindFirstChildOfClass("Humanoid")
+		end
+
+		if player.Character ~= character or not character:IsDescendantOf(game) then
+			return
+		end
+
+		-- must rely on HumanoidRootPart naming because Humanoid.RootPart does not fire changed signals
+		local rootPart = character:FindFirstChild("HumanoidRootPart")
+		while character:IsDescendantOf(game) and not rootPart do
+			waitForFirst(character.ChildAdded, character.AncestryChanged, humanoid.AncestryChanged, player.CharacterAdded)
+			rootPart = character:FindFirstChild("HumanoidRootPart")
+		end
+
+		if rootPart and humanoid:IsDescendantOf(game) and character:IsDescendantOf(game) and player.Character == character then
+			initializeSoundSystem(player, humanoid, rootPart)
+		end
+	end
+
+	if player.Character then
+		characterAdded(player.Character)
+	end
+	player.CharacterAdded:Connect(characterAdded)
+end
+
+Players.PlayerAdded:Connect(playerAdded)
+for _, player in ipairs(Players:GetPlayers()) do
+	playerAdded(player)
+end
+]]></string>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+        <Item class="ModuleScript" referent="14">
+          <Properties>
+            <string name="Name">AnimationState</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source">local STATE_MAP = {
+	["climb"] = Enum.HumanoidStateType.Climbing,
+	["fall"] = Enum.HumanoidStateType.Freefall,
+	["idle"] = Enum.HumanoidStateType.RunningNoPhysics,
+	["jump"] = Enum.HumanoidStateType.Jumping,
+	["run"] = Enum.HumanoidStateType.Running,
+	["swim"] = Enum.HumanoidStateType.Swimming,
+	["swimidle"] = Enum.HumanoidStateType.Swimming,
+	["walk"] = Enum.HumanoidStateType.Running,
+}
+
+return function(animator, callback)
+	local humanoid = animator.Parent
+	local prevState = humanoid:GetState()
+
+	return animator.AnimationPlayed:Connect(function(track)
+		local state = STATE_MAP[track.Name]
+
+		if not state then
+			local container = track.Animation.Parent
+			state = container and STATE_MAP[container.Name]
+		end
+
+		if state then
+			callback(prevState, state)
+			prevState = state
+		end
+	end)
+end</string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+      </Item>
+    </Item>
+    <Item class="ModuleScript" referent="15">
+      <Properties>
+        <string name="Name">GravityController</string>
+        <BinaryString name="AttributesSerialize"></BinaryString>
+        <bool name="DefinesCapabilities">false</bool>
+        <Content name="LinkedSource">
+          <null>
+          </null>
+        </Content>
+        <string name="Source">local RunService = game:GetService("RunService")
+
+local Utility = script:WaitForChild("Utility")
+local CharacterModules = script:WaitForChild("CharacterModules")
+
+local Maid = require(Utility:WaitForChild("Maid"))
+local Signal = require(Utility:WaitForChild("Signal"))
+local Camera = require(CharacterModules:WaitForChild("Camera"))
+local Control = require(CharacterModules:WaitForChild("Control"))
+local Collider = require(script:WaitForChild("Collider"))
+local StateTracker = require(script:WaitForChild("StateTracker"))
+
+-- CONSTANTS
+
+local TRANSITION = 0.15
+local WALK_FORCE = 200 / 3
+local JUMP_MODIFIER = 1.2
+
+local ZERO3 = Vector3.new(0, 0, 0)
+local UNIT_Y = Vector3.new(0, 1, 0)
+
+-- Class
+
+local GravityControllerClass = {}
+GravityControllerClass.__index = GravityControllerClass
+GravityControllerClass.ClassName = "GravityController"
+
+-- Public Constructors
+
+function GravityControllerClass.new(player)
+	local self = setmetatable({}, GravityControllerClass)
+
+	self.Player = player
+	self.Character = player.Character
+	self.Humanoid = player.Character:WaitForChild("Humanoid")
+	self.HRP = self.Humanoid.RootPart
+
+	self._gravityUp = UNIT_Y
+	self._characterMass = 0
+
+	self._camera = Camera.new(self)
+	self._control = Control.new(self)
+	self._collider = Collider.new(self)
+
+	self._fallStart = self.HRP.Position.y
+	self._prevPart = workspace.Terrain
+	self._prevCFrame = CFrame.new()
+
+	self.StateTracker = StateTracker.new(self)
+	self.Maid = Maid.new()
+
+	init(self)
+
+	return self
+end
+
+-- Private Methods
+
+local function getRotationBetween(u, v, axis)
+	local dot, uxv = u:Dot(v), u:Cross(v)
+	if dot &lt; -0.99999 then return CFrame.fromAxisAngle(axis, math.pi) end
+	return CFrame.new(0, 0, 0, uxv.x, uxv.y, uxv.z, 1 + dot)
+end
+
+local function getModelMass(model)
+	local mass = 0
+	for _, part in pairs(model:GetDescendants()) do
+		if part:IsA("BasePart") and not part.Massless then
+			mass = mass + part:GetMass()
+		end
+	end
+	return mass
+end
+
+local function onJumpRequest(self)
+	if not self.StateTracker.Jumped and self._collider:IsGrounded(true) then
+		local vel = self.HRP.Velocity
+		self.HRP.Velocity = vel + self._gravityUp*self.Humanoid.JumpPower*JUMP_MODIFIER
+		self.StateTracker:RequestJump()
+	end
+end
+
+local function onHeartbeat(self, dt)
+	local standingPart = self._collider:GetStandingPart()
+	
+	if standingPart and self._prevPart and self._prevPart == standingPart then
+		local offset = self._prevCFrame:ToObjectSpace(self.HRP.CFrame)
+		self.HRP.CFrame = standingPart.CFrame * offset
+	end
+
+	self._prevPart = standingPart
+	self._prevCFrame = standingPart and standingPart.CFrame
+end
+
+local function onGravityStep(self, dt)
+	local camCF = workspace.CurrentCamera.CFrame
+
+	-- update the gravity vector
+	local oldGravity = self._gravityUp
+	local newGravity = self:GetGravityUp(oldGravity)
+
+	local sphericalArc = getRotationBetween(oldGravity, newGravity, camCF.XVector)
+	local lerpedArc = CFrame.new():Lerp(sphericalArc, TRANSITION)
+
+	self._gravityUp = lerpedArc * oldGravity
+
+	-- get world move vector
+	local fDot = camCF.ZVector:Dot(newGravity)
+	local cForward = math.abs(fDot) > 0.5 and math.sign(fDot)*camCF.YVector or -camCF.ZVector
+	
+	local left = -cForward:Cross(newGravity).Unit
+	local forward = -left:Cross(newGravity).Unit
+
+	local move = self._control:GetMoveVector()
+	local worldMove = forward*move.z - left*move.x
+	
+	local isInputMoving = false
+	local length = worldMove.Magnitude
+	if length > 0 then
+		isInputMoving = true
+		worldMove = worldMove / length
+	end
+
+	-- get the desired character cframe
+	local hrpLook = -self.HRP.CFrame.ZVector
+	local charForward = hrpLook:Dot(forward)*forward + hrpLook:Dot(left)*left
+	local charRight = charForward:Cross(newGravity).Unit
+
+	local newCharRotation = CFrame.new()
+	local newCharCF = CFrame.fromMatrix(ZERO3, charRight, newGravity, -charForward)
+
+	if self._camera.CameraModule:IsCamRelative() then
+		newCharCF = CFrame.fromMatrix(ZERO3, -left, newGravity)
+	elseif isInputMoving then
+		newCharRotation = newCharRotation:Lerp(getRotationBetween(
+			charForward,
+			worldMove,
+			newGravity
+		), 0.7)
+	end
+
+	-- calculate forces
+	local g = workspace.Gravity
+	local gForce = g * self._characterMass * (UNIT_Y - newGravity)
+
+	local cVelocity = self.HRP.Velocity
+	local tVelocity = self.Humanoid.WalkSpeed * worldMove
+	local gVelocity = cVelocity:Dot(newGravity)*newGravity
+	local hVelocity = cVelocity - gVelocity
+
+	if hVelocity:Dot(hVelocity) &lt; 1 then
+		hVelocity = ZERO3
+	end
+
+	local dVelocity = tVelocity - hVelocity
+	local dVelocityM = dVelocity.Magnitude
+
+	local walkForceM = math.min(10000, WALK_FORCE * self._characterMass * dVelocityM / (dt*60))
+	local walkForce = walkForceM > 0 and (dVelocity / dVelocityM)*walkForceM or ZERO3
+
+	local charRotation = newCharRotation * newCharCF
+
+	self.StateTracker:Update(self._gravityUp, self._collider:IsGrounded(false), isInputMoving)
+	self._collider:Update(walkForce + gForce, charRotation)
+end
+
+function init(self)
+	self.Maid:Mark(self._camera)
+	self.Maid:Mark(self._control)
+	self.Maid:Mark(self._collider)
+
+	self._characterMass = getModelMass(self.Character)
+	self.Maid:Mark(self.Character.AncestryChanged:Connect(function()
+		self._characterMass = getModelMass(self.Character)
+	end))
+
+	self.Humanoid.PlatformStand = true
+	self.Maid:Mark(self.Humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
+		if self.Humanoid.Jump then
+			onJumpRequest(self)
+			self.Humanoid.Jump = false
+		end
+	end))
+
+	self.Maid:Mark(self.StateTracker.Changed:Connect(function(state, speed)
+		if state == Enum.HumanoidStateType.Freefall then
+			self._fallStart = self.HRP.Position:Dot(self._gravityUp)
+		end
+	end))
+
+	self.Maid:Mark(RunService.Heartbeat:Connect(function(dt)
+		onHeartbeat(self, dt)
+	end))
+
+	RunService:BindToRenderStep("GravityStep", Enum.RenderPriority.Camera.Value - 1, function(dt)
+		onGravityStep(self, dt)
+	end)
+
+	self.Humanoid.StateChanged:Wait()
+	self.StateTracker.Changed:Fire(self.StateTracker.State, 0)
+end
+
+-- Public Methods
+
+function GravityControllerClass:ResetGravity(gravity)
+	self._gravityUp = gravity
+	self._fallStart = self.HRP.Position:Dot(gravity)
+end
+
+function GravityControllerClass:GetFallHeight()
+	if self.StateTracker.State == Enum.HumanoidStateType.Freefall then
+		local height = self.HRP.Position:Dot(self._gravityUp)
+		return height - self._fallStart
+	end
+	return 0
+end
+
+function GravityControllerClass:GetGravityUp(oldGravity)
+	return oldGravity
+end
+
+function GravityControllerClass:Destroy()
+	RunService:UnbindFromRenderStep("GravityStep")
+	self.Maid:Sweep()
+	self.Humanoid.PlatformStand = false
+end
+
+--
+
+return GravityControllerClass</string>
+        <int64 name="SourceAssetId">-1</int64>
+        <BinaryString name="Tags"></BinaryString>
+      </Properties>
+      <Item class="Folder" referent="16">
+        <Properties>
+          <string name="Name">CharacterModules</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+        <Item class="ModuleScript" referent="17">
+          <Properties>
+            <string name="Name">Camera</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source">-- Class
+
+local CameraClass = {}
+CameraClass.__index = CameraClass
+CameraClass.ClassName = "Camera"
+
+-- Public Constructors
+
+function CameraClass.new(controller)
+	local self = setmetatable({}, CameraClass)
+
+	local player = controller.Player
+	local playerModule = require(player.PlayerScripts:WaitForChild("PlayerModule"))
+
+	self.Controller = controller
+	self.CameraModule = playerModule:GetCameras()
+
+	init(self)
+
+	return self
+end
+
+-- Private methods
+
+function init(self)
+	--self.CameraModule:SetTransitionRate(1)
+	function self.CameraModule.GetUpVector(this, upVector)
+		return self.Controller._gravityUp
+	end
+end
+
+-- Public Methods
+
+function CameraClass:Destroy()
+	function self.CameraModule.GetUpVector(this, upVector)
+		return Vector3.new(0, 1, 0)
+	end
+end
+
+--
+
+return CameraClass</string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="18">
+          <Properties>
+            <string name="Name">Control</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source">-- Class
+
+local ControlClass = {}
+ControlClass.__index = ControlClass
+ControlClass.ClassName = "Control"
+
+-- Public Constructors
+
+function ControlClass.new(controller)
+	local self = setmetatable({}, ControlClass)
+
+	local player = controller.Player
+	local playerModule = require(player.PlayerScripts:WaitForChild("PlayerModule"))
+
+	self.Controller = controller
+	self.ControlModule = playerModule:GetControls()
+
+	return self
+end
+
+-- Public Methods
+
+function ControlClass:GetMoveVector()
+	return self.ControlModule:GetMoveVector()
+end
+
+function ControlClass:Destroy()
+	
+end
+
+--
+
+return ControlClass</string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+      </Item>
+      <Item class="ModuleScript" referent="19">
+        <Properties>
+          <string name="Name">Collider</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="DefinesCapabilities">false</bool>
+          <Content name="LinkedSource">
+            <null>
+            </null>
+          </Content>
+          <string name="Source"><![CDATA[local Maid = require(script.Parent.Utility.Maid)
+
+local params = RaycastParams.new()
+params.FilterType = Enum.RaycastFilterType.Whitelist
+
+local params2 = RaycastParams.new()
+params2.FilterType = Enum.RaycastFilterType.Blacklist
+
+-- CONSTANTS
+
+local CUSTOM_PHYSICAL = PhysicalProperties.new (0.7, 0, 0, 1, 100)
+
+-- Class
+
+local ColliderClass = {}
+ColliderClass.__index = ColliderClass
+ColliderClass.ClassName = "Collider"
+
+-- Public Constructors
+
+function ColliderClass.new(controller)
+	local self = setmetatable({}, ColliderClass)
+
+	self.Model = Instance.new("Model")
+
+	local sphere, vForce, floor, floor2, gryo = create(self, controller)
+
+	self._maid = Maid.new()
+	
+	self.Controller = controller
+
+	self.Sphere = sphere
+	self.VForce = vForce
+	self.FloorDetector = floor
+	self.JumpDetector = floor2
+	self.Gyro = gryo
+
+	init(self)
+
+	return self
+end
+
+-- Private Methods
+
+local function getHipHeight(controller)
+	if controller.Humanoid.RigType == Enum.HumanoidRigType.R15 then
+		return controller.Humanoid.HipHeight + 0.05
+	end
+	return 2
+end
+
+local function getAttachement(controller)
+	if controller.Humanoid.RigType == Enum.HumanoidRigType.R15 then
+		return controller.HRP:WaitForChild("RootRigAttachment")
+	end
+	return controller.HRP:WaitForChild("RootAttachment")
+end
+
+function create(self, controller)
+	local hipHeight = getHipHeight(controller)
+	local attach = getAttachement(controller)
+
+	local sphere = Instance.new("Part")
+	sphere.Name = "Sphere"
+	sphere.Massless = true
+	sphere.Size = Vector3.new(2, 2, 2)
+	sphere.Shape = Enum.PartType.Ball
+	sphere.Transparency = 1
+	sphere.CustomPhysicalProperties = CUSTOM_PHYSICAL
+
+	local floor = Instance.new("Part")
+	floor.Name = "FloorDectector"
+	floor.CanCollide = false
+	floor.Massless = true
+	floor.Size = Vector3.new(2, 1, 1)
+	floor.Transparency = 1
+
+	local floor2 = Instance.new("Part")
+	floor2.Name = "JumpDectector"
+	floor2.CanCollide = false
+	floor2.Massless = true
+	floor2.Size = Vector3.new(2, 0.2, 1)
+	floor2.Transparency = 1
+
+	local weld = Instance.new("Weld")
+	weld.C0 = CFrame.new(0, -hipHeight, 0.1)
+	weld.Part0 = controller.HRP
+	weld.Part1 = sphere
+	weld.Parent = sphere
+
+	local weld = Instance.new("Weld")
+	weld.C0 = CFrame.new(0, -hipHeight - 1.5, 0)
+	weld.Part0 = controller.HRP
+	weld.Part1 = floor
+	weld.Parent = floor
+
+	local weld = Instance.new("Weld")
+	weld.C0 = CFrame.new(0, -hipHeight - 1.1, 0)
+	weld.Part0 = controller.HRP
+	weld.Part1 = floor2
+	weld.Parent = floor2
+
+	local vForce = Instance.new("VectorForce")
+	vForce.Force = Vector3.new(0, 0, 0)
+	vForce.ApplyAtCenterOfMass = true
+	vForce.RelativeTo = Enum.ActuatorRelativeTo.World
+	vForce.Attachment0 = attach
+	vForce.Parent = controller.HRP
+
+	local gyro = Instance.new("BodyGyro")
+	gyro.P = 25000
+	gyro.MaxTorque = Vector3.new(100000, 100000, 100000)
+	gyro.CFrame = controller.HRP.CFrame
+	gyro.Parent = controller.HRP
+
+	floor.Touched:Connect(function() end)
+	floor2.Touched:Connect(function() end)
+
+	sphere.Parent = self.Model
+	floor.Parent = self.Model
+	floor2.Parent = self.Model
+
+	return sphere, vForce, floor, floor2, gyro
+end
+
+function init(self)
+	self._maid:Mark(self.Model)
+	self._maid:Mark(self.VForce)
+	self._maid:Mark(self.FloorDetector)
+	self._maid:Mark(self.Gyro)
+	self.Model.Name = "Collider"
+	self.Model.Parent = self.Controller.Character
+end
+
+-- Public Methods
+
+function ColliderClass:Update(force, cframe)
+	self.VForce.Force = force
+	self.Gyro.CFrame = cframe
+end
+
+function ColliderClass:IsGrounded(isJumpCheck)
+	local parts = (isJumpCheck and self.JumpDetector or self.FloorDetector):GetTouchingParts()
+	for _, part in pairs(parts) do
+		if not part:IsDescendantOf(self.Controller.Character) and part.CanCollide then
+			return true
+		end
+	end
+end
+
+function ColliderClass:GetStandingPart()
+	params2.FilterDescendantsInstances = {self.Controller.Character}
+
+	local gravityUp = self.Controller._gravityUp
+	local result = workspace:Raycast(self.Sphere.Position, -1.1*gravityUp, params2)
+
+	return result and result.Instance
+end
+
+function ColliderClass:Destroy()
+	self._maid:Sweep()
+end
+
+--
+
+return ColliderClass
+]]></string>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="20">
+        <Properties>
+          <string name="Name">StateTracker</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="DefinesCapabilities">false</bool>
+          <Content name="LinkedSource">
+            <null>
+            </null>
+          </Content>
+          <string name="Source">local Maid = require(script.Parent.Utility.Maid)
+local Signal = require(script.Parent.Utility.Signal)
+
+-- CONSTANTS
+
+local SPEED = {
+	[Enum.HumanoidStateType.Running] = true,
+}
+
+local IN_AIR = {
+	[Enum.HumanoidStateType.Jumping] = true,
+	[Enum.HumanoidStateType.Freefall] = true
+}
+
+local REMAP = {
+	["onFreefall"] = "onFreeFall",
+}
+
+-- Class
+
+local StateTrackerClass = {}
+StateTrackerClass.__index = StateTrackerClass
+StateTrackerClass.ClassName = "StateTracker"
+
+-- Public Constructors
+
+function StateTrackerClass.new(controller)
+	local self = setmetatable({}, StateTrackerClass)
+
+	self._maid = Maid.new()
+
+	self.Controller = controller
+	self.State = Enum.HumanoidStateType.Running
+	self.Speed = 0
+
+	self.Jumped = false
+	self.JumpTick = os.clock()
+
+	self.Animation = require(controller.Character:WaitForChild("Animate"):WaitForChild("Controller"))
+	self.Changed = Signal.new()
+
+	init(self)
+
+	return self
+end
+
+-- Private Methods
+
+function init(self)
+	self._maid:Mark(self.Changed)
+	self._maid:Mark(self.Changed:Connect(function(state, speed)
+		local name = "on" .. state.Name
+		local func = self.Animation[REMAP[name] or name]
+		func(speed)
+	end))
+end
+
+-- Public Methods
+
+function StateTrackerClass:Update(gravityUp, isGrounded, isInputMoving)
+	local cVelocity = self.Controller.HRP.Velocity
+	local gVelocity = cVelocity:Dot(gravityUp)
+
+	local oldState = self.State
+	local oldSpeed = self.Speed
+
+	local newState = nil
+	local newSpeed = cVelocity.Magnitude
+
+	if not isGrounded then
+		if gVelocity > 0 then
+			if self.Jumped then
+				newState = Enum.HumanoidStateType.Jumping
+			else
+				newState = Enum.HumanoidStateType.Freefall
+			end
+		else
+			if self.Jumped then
+				self.Jumped = false
+			end
+			newState = Enum.HumanoidStateType.Freefall
+		end
+	else
+		if self.Jumped and os.clock() - self.JumpTick > 0.1 then
+			self.Jumped = false
+		end
+		newSpeed = (cVelocity - gVelocity*gravityUp).Magnitude
+		newState = Enum.HumanoidStateType.Running
+	end
+
+	newSpeed = isInputMoving and newSpeed or 0
+
+	if oldState ~= newState or (SPEED[newState] and math.abs(newSpeed - oldSpeed) > 0.1) then
+		self.State = newState
+		self.Speed = newSpeed
+		self.Changed:Fire(newState, newSpeed)
+	end
+end
+
+function StateTrackerClass:RequestJump()
+	self.Jumped = true
+	self.JumpTick = os.clock()
+end
+
+function StateTrackerClass:Destroy()
+	self._maid:Sweep()
+end
+
+return StateTrackerClass</string>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+      </Item>
+      <Item class="Folder" referent="21">
+        <Properties>
+          <string name="Name">Utility</string>
+          <BinaryString name="AttributesSerialize"></BinaryString>
+          <bool name="DefinesCapabilities">false</bool>
+          <int64 name="SourceAssetId">-1</int64>
+          <BinaryString name="Tags"></BinaryString>
+        </Properties>
+        <Item class="ModuleScript" referent="22">
+          <Properties>
+            <string name="Name">Maid</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source">-- CONSTANTS
+
+local FORMAT_STR = "Maid does not support type \"%s\""
+
+local DESTRUCTORS = {
+	["function"] = function(item)
+		item()
+	end;
+	["RBXScriptConnection"] = function(item)
+		item:Disconnect()
+	end;
+	["Instance"] = function(item)
+		item:Destroy()
+	end;
+	["table"] = function(item)
+		item:Destroy()
+	end
+}
+
+-- Class
+
+local MaidClass = {}
+MaidClass.__index = MaidClass
+MaidClass.ClassName = "Maid"
+
+-- Public Constructors
+
+function MaidClass.new(...)
+	local self = setmetatable({}, MaidClass)
+	
+	self.Trash = {}
+
+	for _, item in pairs({...}) do
+		self:Mark(item)
+	end
+	
+	return self
+end
+
+-- Public Methods
+
+function MaidClass:Mark(item)
+	local tof = typeof(item)
+	
+	if DESTRUCTORS[tof] then
+		self.Trash[item] = tof
+	else
+		error(FORMAT_STR:format(tof), 2)
+	end
+end
+
+function MaidClass:Unmark(item)
+	if item then
+		self.Trash[item] = nil
+	else
+		self.Trash = {}
+	end
+end
+
+function MaidClass:Sweep()
+	for item, tof in pairs(self.Trash) do
+		DESTRUCTORS[tof](item)
+	end
+	self.Trash = {}
+end
+
+MaidClass.Destroy = MaidClass.Sweep
+
+--
+
+return MaidClass</string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="23">
+          <Properties>
+            <string name="Name">Signal</string>
+            <BinaryString name="AttributesSerialize"></BinaryString>
+            <bool name="DefinesCapabilities">false</bool>
+            <Content name="LinkedSource">
+              <null>
+              </null>
+            </Content>
+            <string name="Source">-- Taken from Quenty's nevermore engine
+-- https://github.com/Quenty/NevermoreEngine/blob/version2/LICENSE.md
+-- https://github.com/Quenty/NevermoreEngine
+
+--- Lua-side duplication of the API of events on Roblox objects.
+-- Signals are needed for to ensure that for local events objects are passed by
+-- reference rather than by value where possible, as the BindableEvent objects
+-- always pass signal arguments by value, meaning tables will be deep copied.
+-- Roblox's deep copy method parses to a non-lua table compatable format.
+-- @classmod Signal
+
+local ENABLE_TRACEBACK = false
+
+local Signal = {}
+Signal.__index = Signal
+Signal.ClassName = "Signal"
+
+--- Constructs a new signal.
+-- @constructor Signal.new()
+-- @treturn Signal
+function Signal.new()
+	local self = setmetatable({}, Signal)
+
+	self._bindableEvent = Instance.new("BindableEvent")
+	self._argData = nil
+	self._argCount = nil -- Prevent edge case of :Fire("A", nil) --> "A" instead of "A", nil
+
+	self._source = ENABLE_TRACEBACK and debug.traceback() or ""
+
+	return self
+end
+
+--- Fire the event with the given arguments. All handlers will be invoked. Handlers follow
+-- Roblox signal conventions.
+-- @param ... Variable arguments to pass to handler
+-- @treturn nil
+function Signal:Fire(...)
+	if not self._bindableEvent then
+		warn(("Signal is already destroyed. %s"):format(self._source))
+		return
+	end
+
+	self._argData = {...}
+	self._argCount = select("#", ...)
+	self._bindableEvent:Fire()
+	-- self._argData = nil
+	-- self._argCount = nil
+end
+
+--- Connect a new handler to the event. Returns a connection object that can be disconnected.
+-- @tparam function handler Function handler called with arguments passed when `:Fire(...)` is called
+-- @treturn Connection Connection object that can be disconnected
+function Signal:Connect(handler)
+	if not (type(handler) == "function") then
+		error(("connect(%s)"):format(typeof(handler)), 2)
+	end
+
+	return self._bindableEvent.Event:Connect(function()
+		handler(unpack(self._argData, 1, self._argCount))
+	end)
+end
+
+--- Wait for fire to be called, and return the arguments it was given.
+-- @treturn ... Variable arguments from connection
+function Signal:Wait()
+	self._bindableEvent.Event:Wait()
+	assert(self._argData, "Missing arg data, likely due to :TweenSize/Position corrupting threadrefs.")
+	return unpack(self._argData, 1, self._argCount)
+end
+
+--- Disconnects all connected events to the signal. Voids the signal as unusable.
+-- @treturn nil
+function Signal:Destroy()
+	if self._bindableEvent then
+		self._bindableEvent:Destroy()
+		self._bindableEvent = nil
+	end
+
+	self._argData = nil
+	self._argCount = nil
+
+	setmetatable(self, nil)
+end
+
+return Signal</string>
+            <int64 name="SourceAssetId">-1</int64>
+            <BinaryString name="Tags"></BinaryString>
+          </Properties>
+        </Item>
+      </Item>
+    </Item>
+  </Item>
+</roblox>

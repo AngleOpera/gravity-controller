@@ -1,0 +1,45 @@
+{
+  "name": "@rbxts/gravity-controller",
+  "version": "1.0.0",
+  "main": "out/init.lua",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AngleOpera/gravity-controller.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AngleOpera/gravity-controller/issues"
+  },
+  "types": "out/index.d.ts",
+  "files": [
+    "out",
+    "GravityController.rbxmx",
+    "!**/*.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rbxtsc",
+    "prepublishOnly": "rbxtsc"
+  },
+  "devDependencies": {
+    "@rbxts/compiler-types": "^2.3.0-types.0",
+    "@rbxts/types": "^1.0.760",
+    "@typescript-eslint/eslint-plugin": "^7.1.1",
+    "@typescript-eslint/parser": "^7.1.1",
+    "copyfiles": "^2.4.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-roblox-ts": "^0.0.36",
+    "eslint-plugin-simple-import-sort": "^12.0.0",
+    "eslint-plugin-unused-imports": "^3.1.0",
+    "prettier": "^3.2.5",
+    "roblox-ts": "^2.3.0-dev-3a89c93",
+    "typescript": "5.4.2"
+  },
+  "dependencies": {
+    "@rbxts/services": "^1.5.4"
+  }
+}
