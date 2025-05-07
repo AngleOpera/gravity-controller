@@ -14,7 +14,7 @@ export interface GravityController extends Instance {
     Mark: (connection: RBXScriptConnection) => void
   }
   GetFallHeight(): number
-  GetGravityUp(self: GravityController, oldGravityUp: Vector3): void
+  GetGravityUp(self: GravityController, oldGravityUp: Vector3): Vector3
   ResetGravity(gravityDirection: Vector3): void
 }
 

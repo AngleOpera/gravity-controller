@@ -43,6 +43,7 @@ export class PlayerGravityController implements OnStart {
       this.disableGravityController()
       this.enableGravityController()
     })
+    if (Players.LocalPlayer.Character) this.enableGravityController()
   }
 
   disableGravityController() {

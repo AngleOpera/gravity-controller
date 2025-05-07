@@ -2,6 +2,11 @@
   "name": "@rbxts/gravity-controller",
   "version": "1.0.0",
   "main": "out/init.lua",
+  "keywords": [
+    "gravity",
+    "rbxts"
+  ],
+  "author": "angleopera",
   "license": "MIT",
   "repository": {
     "type": "git",
