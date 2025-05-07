@@ -14,6 +14,7 @@ import { installGravityControllerClass } from '@rbxts/gravity-controller'
 @Service()
 export class GravityService implements OnInit {
   onInit() {
+    // Install EgoMoose's Rbx-Gravity-Controller https://github.com/EgoMoose/Rbx-Gravity-Controller
     installGravityControllerClass()
   }
 }
