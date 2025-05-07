@@ -1,7 +1,7 @@
 # @rbxts/gravity-controller
 
 Typescript bindings for [EgoMoose's Rbx-Gravity-Controller](https://github.com/EgoMoose/Rbx-Gravity-Controller) with
-ground normal finding by [EmilyBendsSpace](https://x.com/EmilyBendsSpace)a
+ground normal finding by [EmilyBendsSpace](https://x.com/EmilyBendsSpace)
 
 ## Flamework setup
 
