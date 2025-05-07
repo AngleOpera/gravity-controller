@@ -23,17 +23,22 @@ export class GravityService implements OnInit {
 
 ```typescript
 import { Controller, OnStart } from '@flamework/core'
-import { getGravityControllerUp, installGravityControllerClass } from '@rbxts/gravity-controller'
+import {
+  getGravityControllerUp,
+  GravityController,
+  GravityControllerClass,
+  installGravityControllerClass,
+} from '@rbxts/gravity-controller'
 import { Players } from '@rbxts/services'
 
 @Controller({})
-export class GravityController implements OnStart {
+export class PlayerGravityController implements OnStart {
   gravityControllerClass: GravityControllerClass | undefined
   gravityController: GravityController | undefined
 
   onStart() {
     this.gravityControllerClass = installGravityControllerClass()
-    Players.LocalPlayer.CharacterAdded.Connect((character) => {
+    Players.LocalPlayer.CharacterAdded.Connect((_character) => {
       this.disableGravityController()
       this.enableGravityController()
     })
@@ -54,4 +59,5 @@ export class GravityController implements OnStart {
     this.gravityController = gravityController
   }
 }
+
 ```
