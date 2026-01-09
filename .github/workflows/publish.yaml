@@ -3,6 +3,12 @@ name: Publish NPM package
 on:
   push:
     branches: main
+  paths-ignore:
+    - 'README.md'
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   publish:
@@ -16,5 +22,3 @@ jobs:
       - run: yarn
       - run: yarn build
       - uses: JS-DevTools/npm-publish@v1
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
