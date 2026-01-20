@@ -2473,6 +2473,8 @@ local function onGravityStep(self, dt)
 
 	self._gravityUp = lerpedArc * oldGravity
 
+	self._collider:CorrectPositionIfStuck(self._gravityUp)
+
 	-- get world move vector
 	local fDot = camCF.ZVector:Dot(newGravity)
 	local cForward = math.abs(fDot) > 0.5 and math.sign(fDot)*camCF.YVector or -camCF.ZVector
@@ -2865,6 +2867,19 @@ function ColliderClass:IsGrounded(isJumpCheck)
 	for _, part in pairs(parts) do
 		if not part:IsDescendantOf(self.Controller.Character) and part.CanCollide then
 			return true
+		end
+	end
+	return false
+end
+
+function ColliderClass:CorrectPositionIfStuck(gravityUp)
+	params2.FilterDescendantsInstances = {self.Controller.Character}
+	local rayResult = workspace:Raycast(self.Sphere.Position, -gravityUp * 3, params2)
+	if rayResult and rayResult.Instance and rayResult.Instance.CanCollide then
+		local heightAboveHit = (self.Sphere.Position - rayResult.Position):Dot(gravityUp)
+		if heightAboveHit < .95 then
+			local delta = (rayResult.Position + gravityUp * 1.05) - self.Sphere.Position
+			self.Controller.HRP.CFrame = self.Controller.HRP.CFrame + delta
 		end
 	end
 end
