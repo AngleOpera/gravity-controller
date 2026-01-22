@@ -2379,11 +2379,29 @@ local Control = require(CharacterModules:WaitForChild("Control"))
 local Collider = require(script:WaitForChild("Collider"))
 local StateTracker = require(script:WaitForChild("StateTracker"))
 
--- CONSTANTS
+-- CONSTANTS (can be configured via SetConstants)
 
 local TRANSITION = 0.15
 local WALK_FORCE = 200 / 3
 local JUMP_MODIFIER = 1.2
+local USE_BODY_POSITION_LOCK = false  -- Use BodyPosition to prevent sliding on aligned surfaces
+
+-- Module-level configuration function
+local function SetConstants(config)
+	if config.Transition ~= nil then
+		TRANSITION = config.Transition
+	end
+	if config.WalkForce ~= nil then
+		WALK_FORCE = config.WalkForce
+	end
+	if config.JumpModifier ~= nil then
+		JUMP_MODIFIER = config.JumpModifier
+	end
+	if config.UseBodyPositionLock ~= nil then
+		USE_BODY_POSITION_LOCK = config.UseBodyPositionLock
+	end
+        -- print("Set constants", config, WALK_FORCE, USE_BODY_POSITION_LOCK)
+end
 
 local ZERO3 = Vector3.new(0, 0, 0)
 local UNIT_Y = Vector3.new(0, 1, 0)
@@ -2443,6 +2461,10 @@ end
 
 local function onJumpRequest(self)
 	if not self.StateTracker.Jumped and self._collider:IsGrounded(true) then
+		-- Release horizontal lock before jumping
+		if USE_BODY_POSITION_LOCK then
+			self._collider:SetHorizontalLock(false)
+		end
 		local vel = self.HRP.Velocity
 		self.HRP.Velocity = vel + self._gravityUp*self.Humanoid.JumpPower*JUMP_MODIFIER
 		self.StateTracker:RequestJump()
@@ -2531,6 +2553,29 @@ local function onGravityStep(self, dt)
 
 	local charRotation = newCharRotation * newCharCF
 
+	-- Check if we should lock horizontal position to prevent sliding
+	if USE_BODY_POSITION_LOCK then
+		local isGrounded = self._collider:IsGrounded(false)
+		local surfaceNormal = isGrounded and self._collider:GetSurfaceNormal()
+		local isJumping = self.StateTracker.Jumped or self.StateTracker.State == Enum.HumanoidStateType.Jumping
+		
+		-- Don't lock when jumping or not on aligned surface with no input
+		if isGrounded and not isInputMoving and not isJumping and surfaceNormal then
+			local gravityAlignment = math.abs(surfaceNormal:Dot(self._gravityUp))
+			if gravityAlignment > 0.99 then
+				-- Lock horizontal position to prevent sliding
+				self._collider:SetHorizontalLock(true, self.HRP.Position, surfaceNormal)
+			else
+				self._collider:SetHorizontalLock(false)
+			end
+		else
+			self._collider:SetHorizontalLock(false)
+		end
+	else
+		-- Ensure lock is disabled if not using this approach
+		self._collider:SetHorizontalLock(false)
+	end
+
 	self.StateTracker:Update(self._gravityUp, self._collider:IsGrounded(false), isInputMoving)
 	self._collider:Update(walkForce + gForce, charRotation)
 end
@@ -2572,6 +2617,10 @@ function init(self)
 end
 
 -- Public Methods
+
+function GravityControllerClass.SetConstants(_self, config)
+	SetConstants(config)
+end
 
 function GravityControllerClass:ResetGravity(gravity)
 	self._gravityUp = gravity
@@ -2746,7 +2795,7 @@ function ColliderClass.new(controller)
 
 	self.Model = Instance.new("Model")
 
-	local sphere, vForce, floor, floor2, gryo = create(self, controller)
+	local sphere, vForce, floor, floor2, gryo, bodyPosition = create(self, controller)
 
 	self._maid = Maid.new()
 	
@@ -2757,6 +2806,7 @@ function ColliderClass.new(controller)
 	self.FloorDetector = floor
 	self.JumpDetector = floor2
 	self.Gyro = gryo
+	self.BodyPosition = bodyPosition
 
 	init(self)
 
@@ -2836,6 +2886,13 @@ function create(self, controller)
 	gyro.CFrame = controller.HRP.CFrame
 	gyro.Parent = controller.HRP
 
+	local bodyPosition = Instance.new("BodyPosition")
+	bodyPosition.MaxForce = Vector3.new(0, 0, 0)  -- Disabled by default
+	bodyPosition.Position = controller.HRP.Position
+	bodyPosition.P = 100000
+	bodyPosition.D = 10000
+	bodyPosition.Parent = controller.HRP
+
 	floor.Touched:Connect(function() end)
 	floor2.Touched:Connect(function() end)
 
@@ -2843,7 +2900,7 @@ function create(self, controller)
 	floor.Parent = self.Model
 	floor2.Parent = self.Model
 
-	return sphere, vForce, floor, floor2, gyro
+	return sphere, vForce, floor, floor2, gyro, bodyPosition
 end
 
 function init(self)
@@ -2851,6 +2908,7 @@ function init(self)
 	self._maid:Mark(self.VForce)
 	self._maid:Mark(self.FloorDetector)
 	self._maid:Mark(self.Gyro)
+	self._maid:Mark(self.BodyPosition)
 	self.Model.Name = "Collider"
 	self.Model.Parent = self.Controller.Character
 end
@@ -2860,6 +2918,35 @@ end
 function ColliderClass:Update(force, cframe)
 	self.VForce.Force = force
 	self.Gyro.CFrame = cframe
+end
+
+function ColliderClass:SetHorizontalLock(enabled, lockPosition, surfaceNormal)
+	if enabled then
+		-- Lock position to prevent sliding when on aligned surface with no input
+		-- Only lock if we don't already have a lock, or update it
+		if self.BodyPosition.MaxForce.Magnitude == 0 then
+			-- Setting initial lock position
+			self._lockedPosition = lockPosition
+		end
+		-- Keep position locked (update to current position to allow vertical adjustments)
+		-- But constrain horizontal movement by only allowing movement along surface normal
+		local currentPos = self.Controller.HRP.Position
+		local positionAlongNormal = currentPos:Dot(surfaceNormal)*surfaceNormal
+		-- Keep horizontal position from when lock was enabled
+		if self._lockedPosition then
+			local lockedPosAlongNormal = self._lockedPosition:Dot(surfaceNormal)*surfaceNormal
+			local lockedHorizontalPos = self._lockedPosition - lockedPosAlongNormal
+			-- Combine: use current vertical position but locked horizontal position
+			self.BodyPosition.Position = lockedHorizontalPos + positionAlongNormal
+		else
+			self.BodyPosition.Position = lockPosition
+		end
+		self.BodyPosition.MaxForce = Vector3.new(100000, 100000, 100000)
+	else
+		-- Disable constraint
+		self.BodyPosition.MaxForce = Vector3.new(0, 0, 0)
+		self._lockedPosition = nil
+	end
 end
 
 function ColliderClass:IsGrounded(isJumpCheck)
@@ -2891,6 +2978,18 @@ function ColliderClass:GetStandingPart()
 	local result = workspace:Raycast(self.Sphere.Position, -1.1*gravityUp, params2)
 
 	return result and result.Instance
+end
+
+function ColliderClass:GetSurfaceNormal()
+	params2.FilterDescendantsInstances = {self.Controller.Character}
+
+	local gravityUp = self.Controller._gravityUp
+	local result = workspace:Raycast(self.Sphere.Position, -1.1*gravityUp, params2)
+
+	if result and result.Normal then
+		return result.Normal
+	end
+	return nil
 end
 
 function ColliderClass:Destroy()

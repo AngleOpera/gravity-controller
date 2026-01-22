@@ -20,12 +20,32 @@ export interface GravityController extends Instance {
 
 export interface GravityControllerClass {
   new (player: Player): GravityController
+  SetConstants(config: {
+    Transition?: number
+    WalkForce?: number
+    JumpModifier?: number
+    UseBodyPositionLock?: boolean
+  }): void
+}
+
+export interface GravityControllerConfig {
+  Transition?: number
+  WalkForce?: number
+  JumpModifier?: number
+  UseBodyPositionLock?: boolean
 }
 
 export let gravityControllerClass: GravityControllerClass
 
-export function installGravityControllerClass() {
-  if (gravityControllerClass) return gravityControllerClass
+export function installGravityControllerClass(
+  config?: GravityControllerConfig,
+) {
+  if (gravityControllerClass) {
+    if (config) {
+      gravityControllerClass.SetConstants(config)
+    }
+    return gravityControllerClass
+  }
   if (RunService.IsServer()) {
     const starterPlayerScripts = StarterPlayer.WaitForChild(
       'StarterPlayerScripts',
@@ -49,6 +69,11 @@ export function installGravityControllerClass() {
   gravityControllerClass = require(
     ReplicatedStorage.WaitForChild('GravityController') as ModuleScript,
   ) as GravityControllerClass
+
+  if (config && gravityControllerClass.SetConstants) {
+    gravityControllerClass.SetConstants(config)
+  }
+
   return gravityControllerClass
 }
 
