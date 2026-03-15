@@ -2419,8 +2419,10 @@ function GravityControllerClass.new(player)
 
 	self.Player = player
 	self.Character = player.Character
-	self.Humanoid = player.Character:WaitForChild("Humanoid")
+	self.Humanoid = player.Character:WaitForChild("Humanoid", 5)
+	if not self.Humanoid then error("Humanoid not found after 5s") end
 	self.HRP = self.Humanoid.RootPart
+	if not self.HRP then error("HumanoidRootPart not set on Humanoid") end
 
 	self._gravityUp = UNIT_Y
 	self._characterMass = 0
@@ -2612,8 +2614,12 @@ function init(self)
 		onGravityStep(self, dt)
 	end)
 
-	self.Humanoid.StateChanged:Wait()
-	self.StateTracker.Changed:Fire(self.StateTracker.State, 0)
+	-- Fire initial animation state immediately rather than waiting for
+	-- StateChanged, which never fires when PlatformStand is set on a
+	-- humanoid already in PlatformStanding (e.g. during respawn).
+	task.defer(function()
+		self.StateTracker.Changed:Fire(self.StateTracker.State, 0)
+	end)
 end
 
 -- Public Methods
@@ -2680,7 +2686,9 @@ function CameraClass.new(controller)
 	local self = setmetatable({}, CameraClass)
 
 	local player = controller.Player
-	local playerModule = require(player.PlayerScripts:WaitForChild("PlayerModule"))
+	local pmScript = player.PlayerScripts:WaitForChild("PlayerModule", 5)
+	if not pmScript then error("PlayerModule not found after 5s") end
+	local playerModule = require(pmScript)
 
 	self.Controller = controller
 	self.CameraModule = playerModule:GetCameras()
@@ -2735,7 +2743,9 @@ function ControlClass.new(controller)
 	local self = setmetatable({}, ControlClass)
 
 	local player = controller.Player
-	local playerModule = require(player.PlayerScripts:WaitForChild("PlayerModule"))
+	local pmScript = player.PlayerScripts:WaitForChild("PlayerModule", 5)
+	if not pmScript then error("PlayerModule not found after 5s") end
+	local playerModule = require(pmScript)
 
 	self.Controller = controller
 	self.ControlModule = playerModule:GetControls()
@@ -2824,9 +2834,13 @@ end
 
 local function getAttachement(controller)
 	if controller.Humanoid.RigType == Enum.HumanoidRigType.R15 then
-		return controller.HRP:WaitForChild("RootRigAttachment")
+		local attach = controller.HRP:WaitForChild("RootRigAttachment", 5)
+		if not attach then error("RootRigAttachment not found after 5s") end
+		return attach
 	end
-	return controller.HRP:WaitForChild("RootAttachment")
+	local attach = controller.HRP:WaitForChild("RootAttachment", 5)
+	if not attach then error("RootAttachment not found after 5s") end
+	return attach
 end
 
 function create(self, controller)
@@ -3051,7 +3065,11 @@ function StateTrackerClass.new(controller)
 	self.Jumped = false
 	self.JumpTick = os.clock()
 
-	self.Animation = require(controller.Character:WaitForChild("Animate"):WaitForChild("Controller"))
+	local animateScript = controller.Character:WaitForChild("Animate", 5)
+	if not animateScript then error("Animate script not found after 5s") end
+	local controllerModule = animateScript:WaitForChild("Controller", 5)
+	if not controllerModule then error("Animate.Controller not found after 5s") end
+	self.Animation = require(controllerModule)
 	self.Changed = Signal.new()
 
 	init(self)
