@@ -1571,7 +1571,10 @@ return function(humanoid, animate)
 	for prop, _ in pairs(DESC_ANIM_PROPS) do
 		if desc[prop] > 0 then
 			local lookFor = prop:sub(1, #prop - LENGTH):lower()
-			animate:WaitForChild(lookFor)
+			local child = animate:WaitForChild(lookFor, 5)
+			if not child then
+				warn("VerifyAnims: " .. lookFor .. " not found after 5s, skipping")
+			end
 		end
 	end
 end</string>

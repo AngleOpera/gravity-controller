@@ -1,6 +1,6 @@
 {
   "name": "@rbxts/gravity-controller",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "main": "out/init.lua",
   "keywords": [
     "gravity",
