@@ -3,13 +3,16 @@
     <Properties>
       <string name="Name">GravityController</string>
       <BinaryString name="AttributesSerialize"></BinaryString>
-      <bool name="DefinesCapabilities">false</bool>
+      <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
       <bool name="Disabled">false</bool>
-      <Content name="LinkedSource">
+      <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+      <ContentId name="LinkedSource">
         <null>
         </null>
-      </Content>
+      </ContentId>
       <token name="RunContext">0</token>
+      <bool name="DefinesCapabilities">false</bool>
+      <string name="ScriptGuid">{eb65b9d8-9e71-469b-96da-3fd9967e0eea}</string>
       <string name="Source">local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterPlayerScripts = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
 local StarterCharacterScripts = game:GetService("StarterPlayer"):WaitForChild("StarterCharacterScripts")
@@ -29,39 +32,50 @@ replace(Client:WaitForChild("Animate"), StarterCharacterScripts)
 script:WaitForChild("GravityController").Parent = ReplicatedStorage</string>
       <int64 name="SourceAssetId">-1</int64>
       <BinaryString name="Tags"></BinaryString>
+      <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005d6</UniqueId>
     </Properties>
     <Item class="Folder" referent="1">
       <Properties>
         <string name="Name">Client</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
         <bool name="DefinesCapabilities">false</bool>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
+        <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005d7</UniqueId>
       </Properties>
       <Item class="LocalScript" referent="2">
         <Properties>
           <string name="Name">Animate</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
-          <bool name="DefinesCapabilities">false</bool>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="Disabled">false</bool>
-          <Content name="LinkedSource">
+          <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+          <ContentId name="LinkedSource">
             <null>
             </null>
-          </Content>
+          </ContentId>
           <token name="RunContext">0</token>
+          <bool name="DefinesCapabilities">false</bool>
+          <string name="ScriptGuid">{b0f949ba-48fa-4730-a891-99736e020579}</string>
           <string name="Source">require(script:WaitForChild("Controller"))</string>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
+          <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005d8</UniqueId>
         </Properties>
         <Item class="ModuleScript" referent="3">
           <Properties>
             <string name="Name">Controller</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{3d1c6cbf-6f7d-4e94-842b-2588e60c794e}</string>
             <string name="Source">local animate = script.Parent
 local humanoid = animate.Parent:WaitForChild("Humanoid")
 local loaded = animate:WaitForChild("Loaded")
@@ -80,15 +94,19 @@ loaded.Value = true
 return output</string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005d9</UniqueId>
           </Properties>
         </Item>
         <Item class="BoolValue" referent="4">
           <Properties>
             <string name="Name">Loaded</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
             <bool name="DefinesCapabilities">false</bool>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005da</UniqueId>
             <bool name="Value">false</bool>
           </Properties>
         </Item>
@@ -96,20 +114,26 @@ return output</string>
           <Properties>
             <string name="Name">PlayEmote</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
             <bool name="DefinesCapabilities">false</bool>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005db</UniqueId>
           </Properties>
         </Item>
         <Item class="ModuleScript" referent="6">
           <Properties>
             <string name="Name">R15</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{6754736d-045f-4c49-b9fb-cc82c0bfb1b5}</string>
             <string name="Source"><![CDATA[local script = script.Parent
 
 local Character = script.Parent
@@ -844,6 +868,7 @@ end
 	
 local function onHook()
 	onUnhook()
+	if not eventHum then return end
 	
 	pose = Humanoid.Sit and "Seated" or "Standing"
 	
@@ -867,6 +892,9 @@ RepHumanoid.Changed:Connect(function()
 end)
 
 RepHumanoid.Value = Humanoid
+if #events == 0 then
+	onHook()
+end
 
 -- setup emote chat hook
 game:GetService("Players").LocalPlayer.Chatted:connect(function(msg)
@@ -935,17 +963,21 @@ return {
 ]]></string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005dc</UniqueId>
           </Properties>
         </Item>
         <Item class="ModuleScript" referent="7">
           <Properties>
             <string name="Name">R6</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{7ab34f07-f6d8-4d43-a55b-e96b6488627a}</string>
             <string name="Source">local script = script.Parent
 	
 local Figure = script.Parent
@@ -1458,6 +1490,7 @@ end
 	
 local function onHook()
 	onUnhook()
+	if not eventHum then return end
 	
 	pose = Humanoid.Sit and "Seated" or "Standing"
 	
@@ -1481,6 +1514,9 @@ RepHumanoid.Changed:Connect(function()
 end)
 
 RepHumanoid.Value = Humanoid
+if #events == 0 then
+	onHook()
+end
 
 -- setup emote chat hook
 game:GetService("Players").LocalPlayer.Chatted:connect(function(msg)
@@ -1528,15 +1564,19 @@ return {
 }</string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005dd</UniqueId>
           </Properties>
         </Item>
         <Item class="ObjectValue" referent="8">
           <Properties>
             <string name="Name">ReplicatedHumanoid</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
             <bool name="DefinesCapabilities">false</bool>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005de</UniqueId>
             <Ref name="Value">null</Ref>
           </Properties>
         </Item>
@@ -1544,11 +1584,14 @@ return {
           <Properties>
             <string name="Name">VerifyAnims</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{0ba70de6-b4f1-4e69-bd8b-61d26d449d79}</string>
             <string name="Source">local LENGTH = string.len("Animation")
 
 local DESC_ANIM_PROPS = {
@@ -1580,6 +1623,7 @@ return function(humanoid, animate)
 end</string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005df</UniqueId>
           </Properties>
         </Item>
       </Item>
@@ -1587,13 +1631,16 @@ end</string>
         <Properties>
           <string name="Name">PlayerScriptsLoader</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
-          <bool name="DefinesCapabilities">false</bool>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="Disabled">false</bool>
-          <Content name="LinkedSource">
+          <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+          <ContentId name="LinkedSource">
             <null>
             </null>
-          </Content>
+          </ContentId>
           <token name="RunContext">0</token>
+          <bool name="DefinesCapabilities">false</bool>
+          <string name="ScriptGuid">{e0183d8c-3ce2-475d-ae7c-995a9c8941b8}</string>
           <string name="Source">--[[
 	PlayerScriptsLoader - This script requires and instantiates the PlayerModule singleton
 
@@ -1851,16 +1898,20 @@ end
 require(PlayerModule)</string>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
+          <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e0</UniqueId>
         </Properties>
         <Item class="ModuleScript" referent="11">
           <Properties>
             <string name="Name">CameraInjector</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{431f5e99-73c4-410d-92cf-798558b9d76b}</string>
             <string name="Source"><![CDATA[-- Injects into the CameraModule to override for public API access
 -- EgoMoose
 
@@ -1936,17 +1987,21 @@ return result
 ]]></string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e1</UniqueId>
           </Properties>
         </Item>
         <Item class="ModuleScript" referent="12">
           <Properties>
             <string name="Name">FakeUserSettings</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{eac70e9a-9f5c-452e-bae3-2826d0735557}</string>
             <string name="Source">local FFLAG_OVERRIDES = {
 	["UserRemoveTheCameraApi"] = false
 }
@@ -1978,6 +2033,7 @@ end
 return FakeUserSettingsFunc</string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e2</UniqueId>
           </Properties>
         </Item>
       </Item>
@@ -1985,13 +2041,16 @@ return FakeUserSettingsFunc</string>
         <Properties>
           <string name="Name">RbxCharacterSounds</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
-          <bool name="DefinesCapabilities">false</bool>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
           <bool name="Disabled">false</bool>
-          <Content name="LinkedSource">
+          <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+          <ContentId name="LinkedSource">
             <null>
             </null>
-          </Content>
+          </ContentId>
           <token name="RunContext">0</token>
+          <bool name="DefinesCapabilities">false</bool>
+          <string name="ScriptGuid">{cdad40e6-3a62-4b8c-b94e-2dd8d206ffdb}</string>
           <string name="Source"><![CDATA[-- Roblox character sound script
 
 local Players = game:GetService("Players")
@@ -2316,16 +2375,20 @@ end
 ]]></string>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
+          <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e3</UniqueId>
         </Properties>
         <Item class="ModuleScript" referent="14">
           <Properties>
             <string name="Name">AnimationState</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{9fdc64e9-3148-4289-9ab9-51fe1358b8d9}</string>
             <string name="Source">local STATE_MAP = {
 	["climb"] = Enum.HumanoidStateType.Climbing,
 	["fall"] = Enum.HumanoidStateType.Freefall,
@@ -2357,6 +2420,7 @@ return function(animator, callback)
 end</string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e4</UniqueId>
           </Properties>
         </Item>
       </Item>
@@ -2365,11 +2429,14 @@ end</string>
       <Properties>
         <string name="Name">GravityController</string>
         <BinaryString name="AttributesSerialize"></BinaryString>
-        <bool name="DefinesCapabilities">false</bool>
-        <Content name="LinkedSource">
+        <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+        <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+        <ContentId name="LinkedSource">
           <null>
           </null>
-        </Content>
+        </ContentId>
+        <bool name="DefinesCapabilities">false</bool>
+        <string name="ScriptGuid">{f6e2e306-cb25-41c8-91a6-74b8518edd95}</string>
         <string name="Source">local RunService = game:GetService("RunService")
 
 local Utility = script:WaitForChild("Utility")
@@ -2659,24 +2726,31 @@ end
 return GravityControllerClass</string>
         <int64 name="SourceAssetId">-1</int64>
         <BinaryString name="Tags"></BinaryString>
+        <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e5</UniqueId>
       </Properties>
       <Item class="Folder" referent="16">
         <Properties>
           <string name="Name">CharacterModules</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
+          <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e6</UniqueId>
         </Properties>
         <Item class="ModuleScript" referent="17">
           <Properties>
             <string name="Name">Camera</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{76d10358-03a7-4411-9c24-5a674dd6c931}</string>
             <string name="Source">-- Class
 
 local CameraClass = {}
@@ -2723,17 +2797,21 @@ end
 return CameraClass</string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e7</UniqueId>
           </Properties>
         </Item>
         <Item class="ModuleScript" referent="18">
           <Properties>
             <string name="Name">Control</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{10647ef5-c281-4a40-b0bb-8038409c7a2d}</string>
             <string name="Source">-- Class
 
 local ControlClass = {}
@@ -2771,6 +2849,7 @@ end
 return ControlClass</string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e8</UniqueId>
           </Properties>
         </Item>
       </Item>
@@ -2778,11 +2857,14 @@ return ControlClass</string>
         <Properties>
           <string name="Name">Collider</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
-          <bool name="DefinesCapabilities">false</bool>
-          <Content name="LinkedSource">
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+          <ContentId name="LinkedSource">
             <null>
             </null>
-          </Content>
+          </ContentId>
+          <bool name="DefinesCapabilities">false</bool>
+          <string name="ScriptGuid">{f0cc7fc1-6d6d-4df8-a71d-31e31a485f35}</string>
           <string name="Source"><![CDATA[local Maid = require(script.Parent.Utility.Maid)
 
 local params = RaycastParams.new()
@@ -3019,17 +3101,21 @@ return ColliderClass
 ]]></string>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
+          <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005e9</UniqueId>
         </Properties>
       </Item>
       <Item class="ModuleScript" referent="20">
         <Properties>
           <string name="Name">StateTracker</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
-          <bool name="DefinesCapabilities">false</bool>
-          <Content name="LinkedSource">
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+          <ContentId name="LinkedSource">
             <null>
             </null>
-          </Content>
+          </ContentId>
+          <bool name="DefinesCapabilities">false</bool>
+          <string name="ScriptGuid">{7ebcb610-6d6d-492e-9422-94acd49b969d}</string>
           <string name="Source">local Maid = require(script.Parent.Utility.Maid)
 local Signal = require(script.Parent.Utility.Signal)
 
@@ -3145,25 +3231,32 @@ end
 return StateTrackerClass</string>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
+          <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005ea</UniqueId>
         </Properties>
       </Item>
       <Item class="Folder" referent="21">
         <Properties>
           <string name="Name">Utility</string>
           <BinaryString name="AttributesSerialize"></BinaryString>
+          <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+          <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
           <bool name="DefinesCapabilities">false</bool>
           <int64 name="SourceAssetId">-1</int64>
           <BinaryString name="Tags"></BinaryString>
+          <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005eb</UniqueId>
         </Properties>
         <Item class="ModuleScript" referent="22">
           <Properties>
             <string name="Name">Maid</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{a0996765-17f7-4168-a2cf-13d8501d57f7}</string>
             <string name="Source">-- CONSTANTS
 
 local FORMAT_STR = "Maid does not support type \"%s\""
@@ -3237,17 +3330,21 @@ MaidClass.Destroy = MaidClass.Sweep
 return MaidClass</string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005ec</UniqueId>
           </Properties>
         </Item>
         <Item class="ModuleScript" referent="23">
           <Properties>
             <string name="Name">Signal</string>
             <BinaryString name="AttributesSerialize"></BinaryString>
-            <bool name="DefinesCapabilities">false</bool>
-            <Content name="LinkedSource">
+            <SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+            <UniqueId name="HistoryId">00000000000000000000000000000000</UniqueId>
+            <ContentId name="LinkedSource">
               <null>
               </null>
-            </Content>
+            </ContentId>
+            <bool name="DefinesCapabilities">false</bool>
+            <string name="ScriptGuid">{8108a59e-e9e8-499c-8311-78d8a49a0a92}</string>
             <string name="Source">-- Taken from Quenty's nevermore engine
 -- https://github.com/Quenty/NevermoreEngine/blob/version2/LICENSE.md
 -- https://github.com/Quenty/NevermoreEngine
@@ -3335,6 +3432,7 @@ end
 return Signal</string>
             <int64 name="SourceAssetId">-1</int64>
             <BinaryString name="Tags"></BinaryString>
+            <UniqueId name="UniqueId">62919a01c8dda09809ca8574000005ed</UniqueId>
           </Properties>
         </Item>
       </Item>
