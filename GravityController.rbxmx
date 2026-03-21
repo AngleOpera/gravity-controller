@@ -1744,7 +1744,7 @@ local defaultUpdateMouseBehavior = BaseCamera.UpdateMouseBehavior
 
 function BaseCamera:UpdateMouseBehavior()
 	defaultUpdateMouseBehavior(self)
-	if UserGameSettings.RotationType == Enum.RotationType.CameraRelative then
+	if _G._gravityControllerActive and UserGameSettings.RotationType == Enum.RotationType.CameraRelative then
 		UserGameSettings.RotationType = Enum.RotationType.MovementRelative
 	end
 end
@@ -2662,6 +2662,7 @@ function init(self)
 		self._characterMass = getModelMass(self.Character)
 	end))
 
+	_G._gravityControllerActive = true
 	self.Humanoid.PlatformStand = true
 	self.Maid:Mark(self.Humanoid:GetPropertyChangedSignal("Jump"):Connect(function()
 		if self.Humanoid.Jump then
@@ -2719,6 +2720,7 @@ function GravityControllerClass:Destroy()
 	RunService:UnbindFromRenderStep("GravityStep")
 	self.Maid:Sweep()
 	self.Humanoid.PlatformStand = false
+	_G._gravityControllerActive = false
 end
 
 --

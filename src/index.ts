@@ -3,6 +3,7 @@ import {
   ReplicatedStorage,
   RunService,
   StarterPlayer,
+  Workspace,
 } from '@rbxts/services'
 
 export interface GravityController extends Instance {
@@ -34,6 +35,17 @@ export interface GravityControllerConfig {
   JumpModifier?: number
   UseBodyPositionLock?: boolean
 }
+
+export interface GravityLogger {
+  Info(message: string): void
+  Warn(message: string): void
+  Error(message: string): void
+}
+
+export type GetGravityUp = (
+  self: GravityController,
+  oldGravityUp: Vector3,
+) => Vector3
 
 export let gravityControllerClass: GravityControllerClass
 
@@ -76,6 +88,233 @@ export function installGravityControllerClass(
 
   return gravityControllerClass
 }
+
+// ── Utility ──────────────────────────────────────────────────────────
+
+export function wrapGravityUpSaveAttribute(getGravityUp: GetGravityUp) {
+  return (gravityController: GravityController, oldGravityUp: Vector3) => {
+    const up = getGravityUp(gravityController, oldGravityUp)
+    if (up.sub(oldGravityUp).Magnitude > 0.001) {
+      gravityController.HRP.SetAttribute('GravityUp', up)
+    }
+    return up
+  }
+}
+
+// ── GravityManager ───────────────────────────────────────────────────
+
+const ENABLING_STALE_SEC = 5
+const MAX_GRAVITY_RETRIES = 3
+const RETRY_BACKOFF_SEC = 2
+
+const noopLogger: GravityLogger = {
+  Info() {},
+  Warn() {},
+  Error() {},
+}
+
+export class GravityManager {
+  private _controller: GravityController | undefined
+  private _enabling = false
+  private enablingStartedAt = 0
+  private generation = 0
+  private retryCount = 0
+  private constructionThread: thread | undefined
+  private pendingGetGravityUp: GetGravityUp | undefined
+
+  private readonly gravityControllerClass: GravityControllerClass
+  private readonly logger: GravityLogger
+
+  constructor(
+    gravityControllerClass: GravityControllerClass,
+    logger?: GravityLogger,
+  ) {
+    this.gravityControllerClass = gravityControllerClass
+    this.logger = logger ?? noopLogger
+  }
+
+  getController(): GravityController | undefined {
+    return this._controller
+  }
+
+  getIsEnabling(): boolean {
+    return this._enabling
+  }
+
+  disable() {
+    const wasActive = this._controller !== undefined
+    const wasEnabling = this._enabling
+    if (!wasActive && !wasEnabling) return
+
+    const prevGen = this.generation
+    this.generation++
+    this._enabling = false
+    this.pendingGetGravityUp = undefined
+    this.retryCount = 0
+
+    if (this.constructionThread) {
+      pcall(() => task.cancel(this.constructionThread!))
+      this.constructionThread = undefined
+    }
+
+    this.logger.Info(
+      `Disabling gravity controller: wasActive=${wasActive}, wasEnabling=${wasEnabling}` +
+        `, gen=${prevGen}->${this.generation}`,
+    )
+
+    this._controller?.Destroy()
+    this._controller = undefined
+
+    const hrp = Players.LocalPlayer.Character?.FindFirstChild(
+      'HumanoidRootPart',
+    ) as BasePart | undefined
+    hrp?.SetAttribute('GravityUp', new Vector3(0, 1, 0))
+  }
+
+  enable(getGravityUp: GetGravityUp) {
+    this.pendingGetGravityUp = getGravityUp
+    if (this._controller) return
+
+    const now = Workspace.GetServerTimeNow()
+    if (this._enabling && now - this.enablingStartedAt < ENABLING_STALE_SEC)
+      return
+
+    this._enabling = true
+    this.enablingStartedAt = now
+    const generation = this.generation
+    const timeout = ENABLING_STALE_SEC + this.retryCount * RETRY_BACKOFF_SEC
+    this.logger.Info(
+      `Enabling gravity controller (gen ${generation}, timeout ${timeout}s)`,
+    )
+
+    this.constructionThread = task.spawn(() => {
+      // Phase 1: wait for character
+      if (!Players.LocalPlayer.Character) {
+        Players.LocalPlayer.CharacterAdded.Wait()
+      }
+      const character = Players.LocalPlayer.Character
+      if (generation !== this.generation) {
+        this._enabling = false
+        const pending = this.pendingGetGravityUp
+        if (pending) this.enable(pending)
+        return
+      }
+
+      // Phase 2: wait for Animate script + Controller instance
+      const animate = character!.WaitForChild('Animate', timeout)
+      if (!animate) {
+        this.retryEnable(generation, `Animate not found after ${timeout}s`)
+        return
+      }
+      const animController = animate.WaitForChild('Controller', timeout)
+      if (!animController) {
+        this.retryEnable(
+          generation,
+          `Animate.Controller not found after ${timeout}s`,
+        )
+        return
+      }
+
+      // Phase 3: wait for Animate module to finish executing
+      const loaded = animate.FindFirstChild('Loaded') as BoolValue | undefined
+      if (loaded && !loaded.Value) {
+        this.logger.Info(
+          `Waiting for Animate to finish loading (gen ${generation})`,
+        )
+        const loadStart = os.clock()
+        while (
+          !loaded.Value &&
+          os.clock() - loadStart < timeout &&
+          generation === this.generation
+        ) {
+          task.wait(0.1)
+        }
+        if (!loaded.Value) {
+          this.retryEnable(
+            generation,
+            `Animate not fully loaded after ${timeout}s`,
+          )
+          return
+        }
+      }
+
+      if (generation !== this.generation) {
+        this._enabling = false
+        const pending = this.pendingGetGravityUp
+        if (pending) this.enable(pending)
+        return
+      }
+
+      // Phase 4: construct
+      this.logger.Info(`Constructing gravity controller (gen ${generation})`)
+      const [ok, result] = pcall(() => {
+        const gc = new this.gravityControllerClass(Players.LocalPlayer)
+        gc.GetGravityUp = getGravityUp
+        return gc
+      })
+      this._enabling = false
+
+      if (generation !== this.generation) {
+        this.logger.Info(
+          `Gravity controller construction completed but generation is stale (${generation} vs ${this.generation}), destroying`,
+        )
+        if (ok && result) result.Destroy()
+        const pending = this.pendingGetGravityUp
+        if (pending) this.enable(pending)
+        return
+      }
+
+      if (ok && result) {
+        this._controller = result
+        this.pendingGetGravityUp = undefined
+        this.retryCount = 0
+        this.logger.Info(`Gravity controller enabled (gen ${generation})`)
+      } else {
+        const err =
+          type(result) === 'string'
+            ? result
+            : tostring(result ?? 'Unknown error')
+        this.logger.Error(`Error enabling gravity controller: ${err}`)
+      }
+    })
+
+    // Watchdog: hard-cancel + cleanup + retry
+    task.delay(timeout, () => {
+      if (!this._enabling || this.generation !== generation) return
+
+      if (this.constructionThread) {
+        pcall(() => task.cancel(this.constructionThread!))
+        this.constructionThread = undefined
+      }
+      pcall(() => RunService.UnbindFromRenderStep('GravityStep'))
+      const humanoid =
+        Players.LocalPlayer.Character?.FindFirstChildOfClass('Humanoid')
+      if (humanoid) humanoid.PlatformStand = false
+
+      this.retryEnable(generation, `construction timed out after ${timeout}s`)
+    })
+  }
+
+  private retryEnable(generation: number, reason: string) {
+    if (generation !== this.generation) return
+    this._enabling = false
+    this.retryCount++
+    if (this.retryCount > MAX_GRAVITY_RETRIES) {
+      this.logger.Error(
+        `Gravity controller failed after ${this.retryCount} attempts (${reason}), giving up (gen ${generation})`,
+      )
+      return
+    }
+    this.logger.Warn(
+      `Gravity controller: ${reason} (gen ${generation}), retrying (attempt ${this.retryCount}/${MAX_GRAVITY_RETRIES})`,
+    )
+    this.generation++
+    const pending = this.pendingGetGravityUp
+    if (pending) this.enable(pending)
+  }
+}
+
+// ── GetGravityUp implementations ─────────────────────────────────────
 
 const PI2 = math.pi * 2
 const ZERO = new Vector3(0, 0, 0)
