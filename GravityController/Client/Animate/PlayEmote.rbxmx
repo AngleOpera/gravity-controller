@@ -1,0 +1,7 @@
+<roblox version="4">
+  <Item class="BindableFunction" referent="0">
+    <Properties>
+      <string name="Name">PlayEmote</string>
+    </Properties>
+  </Item>
+</roblox>

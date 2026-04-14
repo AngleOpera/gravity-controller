@@ -18,7 +18,7 @@
   "types": "out/index.d.ts",
   "files": [
     "out",
-    "GravityController.rbxmx",
+    "GravityController",
     "!**/*.tsbuildinfo"
   ],
   "publishConfig": {

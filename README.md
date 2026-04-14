@@ -11,7 +11,7 @@ Players can walk on walls, ceilings, and any arbitrary surface with smooth gravi
 npm install @rbxts/gravity-controller
 ```
 
-The package ships a `GravityController.rbxmx` model that contains the Lua runtime (camera, collider, state tracker, animations, and character sounds). The TypeScript wrapper in `src/index.ts` handles deploying those scripts at runtime and provides typed access to the controller.
+The package ships a `GravityController/` directory tree containing the Luau runtime (camera, collider, state tracker, animations, and character sounds). Rojo syncs this tree into the data model the same way it would a single `.rbxmx`. The TypeScript wrapper in `src/index.ts` handles deploying those scripts at runtime and provides typed access to the controller.
 
 ## How it works
 
@@ -96,45 +96,58 @@ The exported `getGroundNormal` function determines which direction is "up" by ca
 
 All hit normals are weighted (front-facing rays weighted more heavily, feelers weighted 8x) and summed. The final unit vector becomes the new "up" direction. If no rays hit anything, the previous gravity direction is preserved.
 
-### `GravityController.rbxmx` file manifest
+### `GravityController/` file tree
 
-The `.rbxmx` model bundles all the Lua scripts needed at runtime. During `installGravityControllerClass()` these are deployed to the correct locations in the Roblox data model.
+The `GravityController/` directory contains all the Luau source files and a few `.rbxmx` files for non-script instances. Rojo syncs this tree into the data model as the same instance hierarchy that was previously shipped as a single `.rbxmx`. During `installGravityControllerClass()` the children are deployed to the correct locations in the Roblox data model.
 
 ```
-GravityController (Script) ← server entry point; deploys children at runtime
-├── Client (Folder) ← scripts that get copied into StarterPlayer
-│   ├── Animate (LocalScript) → StarterCharacterScripts
-│   │   ├── Controller (ModuleScript) — bootstraps R6/R15 animation sets
-│   │   ├── Loaded (BoolValue) — signals when animations are ready
-│   │   ├── PlayEmote (BindableFunction) — emote playback hook
-│   │   ├── R15 (ModuleScript) — full R15 animation state machine
-│   │   ├── R6 (ModuleScript) — full R6 animation state machine
-│   │   ├── ReplicatedHumanoid (ObjectValue) — humanoid reference for replication
-│   │   └── VerifyAnims (ModuleScript) — validates animation assets on the character
-│   ├── PlayerScriptsLoader (LocalScript) → StarterPlayerScripts
-│   │   ├── CameraInjector (ModuleScript) — monkey-patches PlayerModule's CameraModule
-│   │   │   to expose a public GetUpVector API for gravity-aware camera rotation
-│   │   └── FakeUserSettings (ModuleScript) — shims UserSettings() to override feature
-│   │       flags (e.g. disables UserRemoveTheCameraApi) during camera injection
-│   └── RbxCharacterSounds (LocalScript) → StarterPlayerScripts
-│       └── AnimationState (ModuleScript) — maps animation track names to
-│           HumanoidStateTypes so footstep/jump/fall sounds play correctly
-│           under custom gravity
-└── GravityController (ModuleScript) → ReplicatedStorage
-    ├── CharacterModules (Folder)
-    │   ├── Camera (ModuleScript) — hooks into PlayerModule cameras to override
-    │   │   GetUpVector, making the camera orbit around the custom gravity axis
-    │   └── Control (ModuleScript) — wraps PlayerModule controls to read the
-    │       move vector from keyboard/gamepad/touch input
-    ├── Collider (ModuleScript) — creates an invisible Ball Part welded below
-    │   the HRP for ground detection, plus VectorForce (gravity + walk),
-    │   BodyGyro (orientation), and BodyPosition (optional anti-slide lock)
-    ├── StateTracker (ModuleScript) — replaces Humanoid state detection with
-    │   velocity-based Running/Jumping/Freefall tracking and fires the
-    │   Animate script's callbacks (onRunning, onJumping, onFreeFall, etc.)
-    └── Utility (Folder)
-        ├── Maid (ModuleScript) — connection/instance cleanup utility
-        └── Signal (ModuleScript) — lightweight event/signal implementation
+GravityController/
+├── init.server.luau              ← Script; server entry point, deploys children at runtime
+├── Client/                       ← Folder; scripts that get copied into StarterPlayer
+│   ├── init.meta.json
+│   ├── Animate/                  ← LocalScript → StarterCharacterScripts
+│   │   ├── init.client.luau
+│   │   ├── Controller.luau       — bootstraps R6/R15 animation sets
+│   │   ├── Loaded.rbxmx          — BoolValue; signals when animations are ready
+│   │   ├── PlayEmote.rbxmx       — BindableFunction; emote playback hook
+│   │   ├── R15.luau              — full R15 animation state machine
+│   │   ├── R6.luau               — full R6 animation state machine
+│   │   ├── ReplicatedHumanoid.rbxmx — ObjectValue; humanoid reference for replication
+│   │   └── VerifyAnims.luau      — validates animation assets on the character
+│   ├── PlayerScriptsLoader/      ← LocalScript → StarterPlayerScripts
+│   │   ├── init.client.luau
+│   │   ├── CameraInjector.luau   — monkey-patches PlayerModule's CameraModule
+│   │   │                           to expose a public GetUpVector API for gravity-aware
+│   │   │                           camera rotation
+│   │   └── FakeUserSettings.luau — shims UserSettings() to override feature flags
+│   │                               (e.g. disables UserRemoveTheCameraApi) during
+│   │                               camera injection
+│   └── RbxCharacterSounds/       ← LocalScript → StarterPlayerScripts
+│       ├── init.client.luau
+│       └── AnimationState.luau   — maps animation track names to HumanoidStateTypes
+│                                   so footstep/jump/fall sounds play correctly under
+│                                   custom gravity
+└── GravityController/            ← ModuleScript → ReplicatedStorage
+    ├── init.luau
+    ├── CharacterModules/         ← Folder
+    │   ├── init.meta.json
+    │   ├── Camera.luau           — hooks into PlayerModule cameras to override
+    │   │                           GetUpVector, making the camera orbit around the
+    │   │                           custom gravity axis
+    │   └── Control.luau          — wraps PlayerModule controls to read the move
+    │                               vector from keyboard/gamepad/touch input
+    ├── Collider.luau             — creates an invisible Ball Part welded below
+    │                               the HRP for ground detection, plus VectorForce
+    │                               (gravity + walk), BodyGyro (orientation), and
+    │                               BodyPosition (optional anti-slide lock)
+    ├── StateTracker.luau         — replaces Humanoid state detection with velocity-based
+    │                               Running/Jumping/Freefall tracking and fires the
+    │                               Animate script's callbacks (onRunning, onJumping,
+    │                               onFreeFall, etc.)
+    └── Utility/                  ← Folder
+        ├── init.meta.json
+        ├── Maid.luau             — connection/instance cleanup utility
+        └── Signal.luau           — lightweight event/signal implementation
 ```
 
 **Where each piece ends up at runtime:**

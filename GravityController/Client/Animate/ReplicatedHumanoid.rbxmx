@@ -1,0 +1,8 @@
+<roblox version="4">
+  <Item class="ObjectValue" referent="0">
+    <Properties>
+      <string name="Name">ReplicatedHumanoid</string>
+      <Ref name="Value">null</Ref>
+    </Properties>
+  </Item>
+</roblox>

@@ -1,0 +1,8 @@
+<roblox version="4">
+  <Item class="BoolValue" referent="0">
+    <Properties>
+      <string name="Name">Loaded</string>
+      <bool name="Value">false</bool>
+    </Properties>
+  </Item>
+</roblox>
