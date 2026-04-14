@@ -1912,64 +1912,40 @@ require(PlayerModule)</string>
             </ContentId>
             <bool name="DefinesCapabilities">false</bool>
             <string name="ScriptGuid">{431f5e99-73c4-410d-92cf-798558b9d76b}</string>
-            <string name="Source"><![CDATA[-- Injects into the CameraModule to override for public API access
--- EgoMoose
-
-local FakeUserSettingsFunc = require(script.Parent:WaitForChild("FakeUserSettings"))
-
--- Camera Injection
+            <string name="Source"><![CDATA[-- Injects into the CameraModule for public API access
+-- Based on EgoMoose/patch-roblox-cameramodule (modern approach using debug.info)
 
 local PlayerModule = script.Parent.Parent:WaitForChild("PlayerModule")
 local CameraModule = PlayerModule:WaitForChild("CameraModule")
 local TransparencyController = require(CameraModule:WaitForChild("TransparencyController"))
 
 local result = nil
-local copy = TransparencyController.Enable
-local bind = Instance.new("BindableEvent")
+local thread = coroutine.running()
+local oldNew = TransparencyController.new
 
-local CameraModuleSelf = nil
-local CameraModuleMeta = nil
+TransparencyController.new = function(...)
+	TransparencyController.new = oldNew
 
-local metasetmetatable = function(newTable:{}, newMeta:{})
-	local env = getfenv(2)
-	if env.script==CameraModule then
-		CameraModuleSelf = newTable
-		CameraModuleMeta = newMeta
+	-- debug.info(2, "f") gets the calling function: CameraModule.new
+	local cameraModuleNew = debug.info(2, "f")
+	result = cameraModuleNew()
+
+	-- Resume the waiting main thread
+	if coroutine.status(thread) == "suspended" then
+		task.spawn(thread)
 	end
-	return setmetatable(newTable, newMeta)
+
+	-- Yield forever so the original CameraModule initialization doesn't double-run
+	coroutine.yield()
 end
 
-local phaseTwoEnable = function(self, ...)
-	local env = getfenv(3)
-	env.setmetatable = nil
-	setfenv(3, env)
-
-	TransparencyController.Enable = copy
-	return copy(self, ...)
-end
-
-TransparencyController.Enable = function(self, ...)
-	copy(self, ...)
-
-	local env = getfenv(3)
-	env.UserSettings = FakeUserSettingsFunc
-	env.setmetatable = metasetmetatable
-	local f = setfenv(3, env)
-
-	TransparencyController.Enable = phaseTwoEnable
-
-	result = f()
-	if result.ActivateCameraController==nil 
-		and typeof(CameraModuleSelf)=="table"
-		and typeof(CameraModuleSelf.ActivateCameraController)=="function" then
-		result = CameraModuleSelf	
-	end
-	bind.Event:Wait() -- infinite wait so no more connections can be made
-end
-
-coroutine.wrap(function()
+task.spawn(function()
 	require(CameraModule)
-end)()
+end)
+
+while not result do
+	coroutine.yield()
+end
 
 -- Place children under injection
 
@@ -1980,8 +1956,6 @@ end
 CameraModule.Name = "_CameraModule"
 script.Name = "CameraModule"
 script.Parent = PlayerModule
-
---
 
 return result
 ]]></string>
